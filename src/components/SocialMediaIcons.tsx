@@ -40,7 +40,7 @@ export default function SocialMediaIcons() {
       flexDirection: 'row',
       gap: '8px'
     }}>
-      {socialLinks.map((social, index) => {
+      {socialLinks.map((social, ) => {
         const IconComponent = social.icon;
         return (
           <a

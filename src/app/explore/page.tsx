@@ -54,7 +54,7 @@ export default function ExplorePage() {
   const [totalResults, setTotalResults] = useState(0);
   const [autocompleteOptions, setAutocompleteOptions] = useState<AutocompleteOption[]>([]);
   const [currentAutocomplete, setCurrentAutocomplete] = useState<AutocompleteOption | null>(null);
-  const [autocompleteIndex, setAutocompleteIndex] = useState(0);
+  const [,setAutocompleteIndex] = useState(0);
   const [preloadedData, setPreloadedData] = useState<{
     artists: Set<string>;
     songs: Set<string>;
@@ -196,8 +196,8 @@ export default function ExplorePage() {
       const data = await response.json();
       const trackOrder: {[key: string]: number} = {};
       
-      data.items?.forEach((track: any, index: number) => {
-        trackOrder[track.id] = index + 1;
+      data.items?.forEach((track: Record<string, unknown>, index: number) => {
+        trackOrder[track.id as string] = index + 1;
       });
       
       return trackOrder;

@@ -10,16 +10,17 @@ export default function HomePage() {
       const elements = document.querySelectorAll('.scroll-fade-element');
       
       elements.forEach((element) => {
-        const rect = element.getBoundingClientRect();
+        const htmlElement = element as HTMLElement;
+        const rect = htmlElement.getBoundingClientRect();
         const windowHeight = window.innerHeight;
         
         // Element is visible when it's 20% into the viewport
         if (rect.top < windowHeight * 0.8 && rect.bottom > windowHeight * 0.2) {
-          element.style.opacity = '1';
-          element.style.transform = 'translateY(0)';
+          htmlElement.style.opacity = '1';
+          htmlElement.style.transform = 'translateY(0)';
         } else {
-          element.style.opacity = '0';
-          element.style.transform = 'translateY(30px)';
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(30px)';
         }
       });
     };
@@ -281,14 +282,16 @@ export default function HomePage() {
                   textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.3)';
-                  e.target.style.transform = 'translateY(-1px)';
-                  e.target.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.2)';
+                  const target = e.target as HTMLElement;
+                  target.style.background = 'rgba(255, 255, 255, 0.3)';
+                  target.style.transform = 'translateY(-1px)';
+                  target.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.2)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = 'none';
+                  const target = e.target as HTMLElement;
+                  target.style.background = 'rgba(255, 255, 255, 0.2)';
+                  target.style.transform = 'translateY(0)';
+                  target.style.boxShadow = 'none';
                 }}
                 >
                   Send Message
