@@ -1,5 +1,6 @@
 'use client';
 
+import { Analytics } from "@vercel/analytics/next"
 import { useEffect } from 'react';
 import Hero from '../components/Hero';
 import SocialMediaIcons from '../components/SocialMediaIcons';
@@ -33,6 +34,7 @@ export default function HomePage() {
 
   return (
     <div>
+      <Analytics/>
       {/* Hero Section - Fixed Background */}
       <Hero />
       
