@@ -11,7 +11,7 @@ export default function Hero() {
       const scrollY = window.scrollY;
       const windowHeight = window.innerHeight;
       // Change to 1.3 so transition completes much faster - by middle of About section
-      const progress = Math.min(scrollY / (windowHeight * 1.3), 1);
+      const progress = Math.min(scrollY / (windowHeight * 0.8), 1);
       setScrollProgress(progress);
     };
 
@@ -22,14 +22,9 @@ export default function Hero() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const yOffset = -20;
+      const yOffset = -435; // Much larger offset to show title
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      // Made scroll slower by increasing duration
-      window.scrollTo({ 
-        top: y, 
-        behavior: 'smooth',
-        // Note: The duration is controlled by the browser, but we can add CSS scroll-behavior for more control
-      });
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 

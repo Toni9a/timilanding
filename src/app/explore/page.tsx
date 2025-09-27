@@ -747,7 +747,7 @@ export default function ExplorePage() {
                 zIndex: 15,
                 overflow: 'hidden',
                 display: 'flex',
-                justifyContent: 'center'
+                justifyContent: 'center'  
               }}
             >
               <div
@@ -841,7 +841,7 @@ export default function ExplorePage() {
                 const messages = [
                   `Hmm, looks like "${searchQuery}" hasn't crossed Timi's piano yet.`,
                   `That one's not in the repertoire yet. Try searching for an artist or genre!`,
-                  `Timi hasn't played that one yet - maybe it's coming soon!`
+                  `Timi hasn't played that one yet -  it's coming soon!`
                 ];
                 return messages[Math.floor(Math.random() * messages.length)];
               }

@@ -6,31 +6,74 @@ import Hero from '../components/Hero';
 import SocialMediaIcons from '../components/SocialMediaIcons';
 
 export default function HomePage() {
-  useEffect(() => {
-    const handleScroll = () => {
-      const elements = document.querySelectorAll('.scroll-fade-element');
-      
-      elements.forEach((element) => {
-        const htmlElement = element as HTMLElement;
-        const rect = htmlElement.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        
-        // Element is visible when it's 20% into the viewport
-        if (rect.top < windowHeight * 0.8 && rect.bottom > windowHeight * 0.2) {
-          htmlElement.style.opacity = '1';
-          htmlElement.style.transform = 'translateY(0)';
-        } else {
-          htmlElement.style.opacity = '0';
-          htmlElement.style.transform = 'translateY(30px)';
-        }
-      });
-    };
+// Replace the useEffect in your page.tsx with this enhanced version:
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Run once on mount
+useEffect(() => {
+  const handleScroll = () => {
+    const elements = document.querySelectorAll('.scroll-fade-element');
     
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    elements.forEach((element, index) => {
+      const htmlElement = element as HTMLElement;
+      const rect = element.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const scrollY = window.scrollY;
+      
+      // Much later fade in, much earlier fade out
+      const isInViewport = rect.top < windowHeight * 0.6 && rect.bottom > windowHeight * 0.4;
+      
+      const elementTop = rect.top + scrollY;
+      const currentScroll = scrollY + windowHeight * 0.5;
+      const elementDistance = currentScroll - elementTop;
+      
+      if (isInViewport) {
+        htmlElement.style.opacity = '1';
+        htmlElement.style.transform = 'translateY(0)';
+      } else {
+        htmlElement.style.opacity = '0';
+        htmlElement.style.transform = 'translateY(30px)';
+      }
+      
+      // SUPER AGGRESSIVE - only 2 paragraphs max
+      
+      // First paragraph - disappears immediately
+      if (index === 1) {
+        if (elementDistance > windowHeight * 0.15) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+      }
+      
+      // Second paragraph - disappears when third shows
+      if (index === 2) {
+        if (elementDistance > windowHeight * 0.25) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+      }
+      
+      // Third paragraph - disappears when fourth shows
+      if (index === 3) {
+        if (elementDistance > windowHeight * 0.35) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+      }
+      
+      // Fourth paragraph - disappears when fifth shows
+      if (index === 4) {
+        if (elementDistance > windowHeight * 0.45) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+      }
+    });
+  };
+
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  handleScroll();
+  
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []);
 
   return (
     <div>
@@ -43,76 +86,161 @@ export default function HomePage() {
         {/* Spacer to push content below hero */}
         <div style={{ height: '100vh' }} />
         
-        {/* About Section - NO BACKGROUND */}
-        <section id="about" style={{
-          minHeight: '100vh',
-          padding: '80px 40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <div style={{ maxWidth: '800px', textAlign: 'center', background: 'transparent' }}>
-            <h2 style={{ 
-              fontSize: '48px', 
-              fontWeight: 'bold', 
-              marginBottom: '40px', 
-              color: 'white',
-              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-              opacity: 0,
-              transform: 'translateY(30px)',
-              transition: 'all 0.8s ease',
-              transitionDelay: '0s'
-            }}
-            className="scroll-fade-element"
-            >
-              About Timi
-            </h2>
-            <p style={{ 
-              fontSize: '18px', 
-              lineHeight: '1.7', 
-              marginBottom: '30px', 
-              color: 'white',
-              textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)',
-              opacity: 0,
-              transform: 'translateY(30px)',
-              transition: 'all 0.8s ease',
-              transitionDelay: '0.2s'
-            }}
-            className="scroll-fade-element"
-            >
-              Timi is a passionate pianist whose journey began at the age of five, exploring the intricate melodies that would later define her artistic voice.
-            </p>
-            <p style={{ 
-              fontSize: '20px', 
-              lineHeight: '1.8', 
-              marginBottom: '30px', 
-              color: 'white',
-              textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)',
-              opacity: 0,
-              transform: 'translateY(30px)',
-              transition: 'all 0.8s ease',
-              transitionDelay: '0.4s'
-            }}
-            className="scroll-fade-element"
-            >
-              With over a decade of classical training, she seamlessly blends traditional techniques with contemporary interpretations, creating a unique sound that resonates with audiences worldwide.
-            </p>
-            <p style={{ 
-              fontSize: '20px', 
-              lineHeight: '1.8', 
-              color: 'white',
-              textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)',
-              opacity: 0,
-              transform: 'translateY(30px)',
-              transition: 'all 0.8s ease',
-              transitionDelay: '0.6s'
-            }}
-            className="scroll-fade-element"
-            >
-              Her performances range from intimate piano arrangements to dynamic collaborations, each piece telling a story that connects deeply with listeners.
-            </p>
-          </div>
-        </section>
+{/* About Section - NO BACKGROUND */}
+<section id="about" style={{
+  minHeight: '100vh',
+  padding: '80px 40px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+}}>
+  <div style={{ maxWidth: '800px', textAlign: 'center', background: 'transparent' }}>
+    <h2 style={{ 
+      fontSize: '48px', 
+      fontWeight: '600', 
+      marginBottom: '40px', 
+      color: 'white',
+      textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
+      opacity: 0,
+      transform: 'translateY(30px)',
+      transition: 'all 0.8s ease',
+      transitionDelay: '0s',
+      fontFamily: "'Playfair Display', serif"
+    }}
+    className="scroll-fade-element"
+    >
+      About Timi
+    </h2>
+    
+    {/* Paragraph 1 - Introduction and Philosophy */}
+    <p style={{ 
+      fontSize: '18px', 
+      lineHeight: '1.7', 
+      marginBottom: '30px', 
+      color: 'white',
+      textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)',
+      opacity: 0,
+      transform: 'translateY(30px)',
+      transition: 'all 0.8s ease',
+      transitionDelay: '0.2s',
+      fontFamily: "'Inter', sans-serif"
+    }}
+    className="scroll-fade-element fade-away-early"
+    >
+      Classically trained but genre-defying, Timi embodies his philosophy: &quot; From classical to hip hop and everything in between. &quot; Born in the UK, raised in the Middle East, and currently calling America home, his multicultural journey infuses every performance with sounds as diverse as his background.
+    </p>
+    
+    {/* Paragraph 2A - Core Artistry */}
+    <p style={{ 
+      fontSize: '18px', 
+      lineHeight: '1.7', 
+      marginBottom: '30px', 
+      color: 'white',
+      textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)',
+      opacity: 0,
+      transform: 'translateY(30px)',
+      transition: 'all 0.8s ease',
+      transitionDelay: '0.4s',
+      fontFamily: "'Inter', sans-serif"
+    }}
+    className="scroll-fade-element fade-away-early"
+    >
+      His artistry lies in making the piano sing stories. Whether emancipating Drake&apos;s intricate flows through melodic interpretation, weaving Clairo&apos;s ethereal ballads into Radiohead&apos;s complexity, or honoring Wu-Tang Clan and Frank Ocean on a concert grand, Timi transforms covers into conversations.
+    </p>
+    
+    {/* Paragraph 2B - Technical Mastery */}
+    <p style={{ 
+      fontSize: '18px', 
+      lineHeight: '1.7', 
+      marginBottom: '30px', 
+      color: 'white',
+      textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)',
+      opacity: 0,
+      transform: 'translateY(30px)',
+      transition: 'all 0.8s ease',
+      transitionDelay: '0.5s',
+      fontFamily: "'Inter', sans-serif"
+    }}
+    className="scroll-fade-element fade-away-early"
+    >
+      His right hand becomes a voice, channeling lyrics through melody in ways that traditional sheet music rarely captures. Meanwhile, his left hand crafts brilliant transitions between songs and genres, drawing from exhaustive music theory knowledge—a feat that elevates his performances from mere covers to musical poetry.
+    </p>
+    
+    {/* Paragraph 3 - Achievements and Recognition */}
+    <p style={{ 
+      fontSize: '18px', 
+      lineHeight: '1.7', 
+      marginBottom: '30px', 
+      color: 'white',
+      textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)',
+      opacity: 0,
+      transform: 'translateY(30px)',
+      transition: 'all 0.8s ease',
+      transitionDelay: '0.6s',
+      fontFamily: "'Inter', sans-serif"
+    }}
+    className="scroll-fade-element fade-away-medium"
+    >
+      This unique approach has captivated hundreds of thousands across TikTok and Instagram, leading to collaborations with Paramount Pictures and Nike. From European concert halls to Asian wedding venues, his performances prove that classical training and contemporary innovation can coexist beautifully.
+    </p>
+    
+    {/* Paragraph 4 - Current Life and Call to Action */}
+    <p style={{ 
+      fontSize: '18px', 
+      lineHeight: '1.7', 
+      color: 'white',
+      textShadow: '1px 1px 3px rgba(0, 0, 0, 0.8)',
+      opacity: 0,
+      transform: 'translateY(30px)',
+      transition: 'all 0.8s ease',
+      transitionDelay: '0.8s',
+      fontFamily: "'Inter', sans-serif"
+    }}
+    className="scroll-fade-element"
+    >
+      Currently balancing Harvard studies with athletic pursuits and a growing performance schedule, Timi invites audiences to{' '}
+      <a 
+      href="/explore" 
+      style={{ 
+        color: 'rgba(255, 255, 255, 0.9)',
+        textDecoration: 'underline',
+        fontWeight: '600',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease'
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:url(/timi-clean.png) center/cover;opacity:0;z-index:9999;transition:opacity 0.5s ease';
+        document.body.appendChild(overlay);
+        
+        // Fade out current, fade in new
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.5s ease';
+        overlay.style.opacity = '1';
+        
+        setTimeout(() => {
+          window.location.href = '/explore';
+        }, 500);
+      }}
+      onMouseEnter={(e) => {
+        const target = e.target as HTMLElement;
+        target.style.color = 'rgba(255, 255, 255, 1)';
+        target.style.textShadow = '0 0 10px rgba(255, 255, 255, 0.5)';
+      }}
+      onMouseLeave={(e) => {
+        const target = e.target as HTMLElement;
+        target.style.color = 'rgba(255, 255, 255, 0.9)';
+        target.style.textShadow = '1px 1px 3px rgba(0, 0, 0, 0.8)';
+      }}
+    >
+      explore
+    </a>
+      {' '}a world where piano knows no limits—making the instrument cool for brands, events, and a new generation of music lovers.
+    </p>
+  </div>
+</section>
 
         {/* Contact Section - Glass Effect Only on Form */}
         <section id="contact" style={{
