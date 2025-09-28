@@ -97,7 +97,7 @@ export default function Hero() {
           color: '#e879f9',
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
           transition: 'all 0.3s ease',
-          fontFamily: "'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive",
+          fontFamily: "'PARISIAN', 'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive",
           letterSpacing: '0.05em'
         }}>
           Timikeys
@@ -108,7 +108,7 @@ export default function Hero() {
           color: '#e879f9',
           textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
           transition: 'all 0.3s ease',
-          fontFamily: "'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive",
+          fontFamily: " 'PARISIAN', 'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive",
           fontStyle: 'italic',
           letterSpacing: '0.1em'
         }}>
@@ -386,9 +386,9 @@ export default function Hero() {
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'rgba(232, 121, 249, 0.1)';
-                    e.currentTarget.style.borderLeftColor = '#e879f9';
+                    e.currentTarget.style.borderLeftColor = '#7c3aed';
                     e.currentTarget.style.transform = 'translateX(5px)';
-                    e.currentTarget.style.color = '#e879f9';
+                    e.currentTarget.style.color = '#7c3aed';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
