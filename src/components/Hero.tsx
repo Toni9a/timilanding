@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import UnifiedMenu from './UnifiedMenu';
 
 export default function Hero() {
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,7 +22,7 @@ export default function Hero() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const yOffset = -435; // Much larger offset to show title
+      const yOffset = -200; // Better offset to show header and first paragraph
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -225,186 +225,10 @@ export default function Hero() {
             Contact
           </button>
           
-          {/* Professional Animated Hamburger Button */}
-          <button 
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsMenuOpen(!isMenuOpen);
-            }}
-            style={{
-              background: scrollProgress > 0.5 ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
-              border: 'none',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              backdropFilter: 'blur(10px)',
-              transition: 'all 0.3s ease',
-              width: '44px',
-              height: '44px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '3px'
-            }}
-          >
-            {/* Hamburger Lines with Animation */}
-            <span style={{
-              width: '20px',
-              height: '2px',
-              backgroundColor: scrollProgress > 0.5 ? 'white' : 'black',
-              transition: 'all 0.3s ease',
-              transform: isMenuOpen ? 'rotate(45deg) translateY(8px)' : 'none',
-              transformOrigin: 'center'
-            }} />
-            <span style={{
-              width: '20px',
-              height: '2px',
-              backgroundColor: scrollProgress > 0.5 ? 'white' : 'black',
-              transition: 'all 0.3s ease',
-              opacity: isMenuOpen ? '0' : '1',
-              transform: isMenuOpen ? 'scale(0)' : 'scale(1)'
-            }} />
-            <span style={{
-              width: '20px',
-              height: '2px',
-              backgroundColor: scrollProgress > 0.5 ? 'white' : 'black',
-              transition: 'all 0.3s ease',
-              transform: isMenuOpen ? 'rotate(-45deg) translateY(-8px)' : 'none',
-              transformOrigin: 'center'
-            }} />
-          </button>
+          {/* Unified Menu Component */}
+          <UnifiedMenu isDark={scrollProgress < 0.5} />
         </div>
       </div>
-
-      {/* Professional Slide-in Menu */}
-      {isMenuOpen && (
-        <>
-          {/* Backdrop */}
-          <div 
-            onClick={() => setIsMenuOpen(false)}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100vh',
-              background: 'rgba(0,0,0,0.6)',
-              zIndex: 15,
-              opacity: isMenuOpen ? 1 : 0,
-              transition: 'opacity 0.3s ease'
-            }}
-          />
-          
-          {/* Menu Drawer */}
-          <div 
-            style={{
-              position: 'fixed',
-              top: 0,
-              right: 0,
-              width: '350px',
-              height: '100vh',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85))',
-              backdropFilter: 'blur(20px)',
-              zIndex: 20,
-              padding: '0',
-              boxShadow: '-10px 0 30px rgba(0,0,0,0.2)',
-              transform: isMenuOpen ? 'translateX(0)' : 'translateX(100%)',
-              transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              borderLeft: '1px solid rgba(255,255,255,0.3)'
-            }}
-          >
-            {/* Menu Header */}
-            <div style={{
-              padding: '30px 25px 20px',
-              borderBottom: '1px solid rgba(0,0,0,0.1)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h3 style={{
-                margin: 0,
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#333',
-                letterSpacing: '0.5px'
-              }}>Menu</h3>
-              <button 
-                onClick={() => setIsMenuOpen(false)}
-                style={{
-                  background: 'rgba(0,0,0,0.1)',
-                  border: 'none',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  width: '35px',
-                  height: '35px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease',
-                  color: '#666'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,0,0,0.2)';
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,0,0,0.1)';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-              >
-                ×
-              </button>
-            </div>
-            
-            {/* Menu Items */}
-            <div style={{ padding: '30px 0' }}>
-              {[
-                { name: 'Gallery', href: '/gallery', icon: '🖼️' },
-                { name: 'Explore Music', href: '/explore', icon: '🎵' },
-                { name: 'Sheetify', href: '/sheetify', icon: '🎼' },
-                { name: 'Live Requests', href: '/live', icon: '🎹' }
-              ].map((item, index) => (
-                <a 
-                  key={item.name}
-                  href={item.href} 
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '15px',
-                    padding: '18px 25px',
-                    fontSize: '18px',
-                    color: '#444',
-                    textDecoration: 'none',
-                    transition: 'all 0.3s ease',
-                    borderLeft: '4px solid transparent',
-                    transform: isMenuOpen ? 'translateX(0)' : 'translateX(50px)',
-                    opacity: isMenuOpen ? 1 : 0,
-                    transitionDelay: `${0.1 + index * 0.1}s`
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(232, 121, 249, 0.1)';
-                    e.currentTarget.style.borderLeftColor = '#7c3aed';
-                    e.currentTarget.style.transform = 'translateX(5px)';
-                    e.currentTarget.style.color = '#7c3aed';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.borderLeftColor = 'transparent';
-                    e.currentTarget.style.transform = 'translateX(0)';
-                    e.currentTarget.style.color = '#444';
-                  }}
-                >
-                  <span style={{ fontSize: '20px' }}>{item.icon}</span>
-                  <span style={{ fontWeight: '500' }}>{item.name}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
     </>
   );
 }

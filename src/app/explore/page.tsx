@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SocialMediaIcons from '../../components/SocialMediaIcons';
 import { SPOTIFY_CONFIG } from '../../lib/spotify-config';
+import UnifiedMenu from '../../components/UnifiedMenu';
 
 interface Genre {
   genre: string;
@@ -47,7 +48,6 @@ export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Performance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -392,102 +392,14 @@ export default function ExplorePage() {
         />
       </motion.div>
 
-      <motion.button
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        style={{
-          position: 'fixed',
-          top: '32px',
-          right: '32px',
-          width: '48px',
-          height: '48px',
-          borderRadius: '12px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '4px',
-          background: 'rgba(255, 255, 255, 0.15)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          cursor: 'pointer',
-          zIndex: 21
-        }}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, delay: 0.1 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: '20px',
-              height: '2px',
-              backgroundColor: 'white',
-              borderRadius: '1px',
-              transition: 'all 0.3s ease'
-            }}
-          />
-        ))}
-      </motion.button>
-
-      {isMenuOpen && (
-        <>
-          <div
-            onClick={() => setIsMenuOpen(false)}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: 'rgba(0, 0, 0, 0.5)',
-              zIndex: 30,
-              backdropFilter: 'blur(5px)'
-            }}
-          />
-          
-          <div style={{
-            position: 'fixed',
-            top: '0',
-            right: '0',
-            width: '300px',
-            height: '100%',
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(20px)',
-            padding: '80px 40px 40px',
-            zIndex: 31,
-            boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.2)'
-          }}>
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              style={{
-                position: 'absolute',
-                top: '32px',
-                right: '32px',
-                width: '32px',
-                height: '32px',
-                border: 'none',
-                background: 'transparent',
-                fontSize: '24px',
-                cursor: 'pointer',
-                color: '#333'
-              }}
-            >
-              ×
-            </button>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <a href="/gallery" style={{ fontSize: '18px', color: '#333', textDecoration: 'none' }}>Gallery</a>
-              <a href="/explore" style={{ fontSize: '18px', color: '#333', textDecoration: 'none' }}>Explore Music</a>
-              <a href="/sheetify" style={{ fontSize: '18px', color: '#333', textDecoration: 'none' }}>Sheetify</a>
-              <a href="/live" style={{ fontSize: '18px', color: '#333', textDecoration: 'none' }}>Live Requests</a>
-            </div>
-          </div>
-        </>
-      )}
-
+      <div style={{
+  position: 'absolute',
+  top: '32px',
+  right: '32px',
+  zIndex: 21
+}}>
+  <UnifiedMenu isDark={false} />
+</div>
       <div 
         style={{
           position: 'relative',

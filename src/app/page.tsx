@@ -52,72 +52,98 @@ export default function HomePage() {
   };
 
   // Scroll animation logic
-  useEffect(() => {
-    const handleScroll = () => {
-      const elements = document.querySelectorAll('.scroll-fade-element');
-      
-      elements.forEach((element, index) => {
-        const htmlElement = element as HTMLElement;
-        const rect = element.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        const scrollY = window.scrollY;
-        
-        // Much later fade in, much earlier fade out
-        const isInViewport = rect.top < windowHeight * 0.6 && rect.bottom > windowHeight * 0.4;
-        
-        const elementTop = rect.top + scrollY;
-        const currentScroll = scrollY + windowHeight * 0.5;
-        const elementDistance = currentScroll - elementTop;
-        
-        if (isInViewport) {
-          htmlElement.style.opacity = '1';
-          htmlElement.style.transform = 'translateY(0)';
-        } else {
-          htmlElement.style.opacity = '0';
-          htmlElement.style.transform = 'translateY(30px)';
-        }
-        
-        // SUPER AGGRESSIVE - only 2 paragraphs max
-        
-        // First paragraph - disappears immediately
-        if (index === 1) {
-          if (elementDistance > windowHeight * 0.15) {
-            htmlElement.style.opacity = '0';
-            htmlElement.style.transform = 'translateY(-50px)';
-          }
-        }
-        
-        // Second paragraph - disappears when third shows
-        if (index === 2) {
-          if (elementDistance > windowHeight * 0.25) {
-            htmlElement.style.opacity = '0';
-            htmlElement.style.transform = 'translateY(-50px)';
-          }
-        }
-        
-        // Third paragraph - disappears when fourth shows
-        if (index === 3) {
-          if (elementDistance > windowHeight * 0.35) {
-            htmlElement.style.opacity = '0';
-            htmlElement.style.transform = 'translateY(-50px)';
-          }
-        }
-        
-        // Fourth paragraph - disappears when fifth shows
-        if (index === 4) {
-          if (elementDistance > windowHeight * 0.45) {
-            htmlElement.style.opacity = '0';
-            htmlElement.style.transform = 'translateY(-50px)';
-          }
-        }
-      });
-    };
+// Replace the existing useEffect scroll handler with this corrected version
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
+useEffect(() => {
+  const handleScroll = () => {
+    const elements = document.querySelectorAll('.scroll-fade-element');
+    const isMobile = window.innerWidth <= 768;
     
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    elements.forEach((element, index) => {
+      const htmlElement = element as HTMLElement;
+      const rect = element.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const scrollY = window.scrollY;
+      
+      // Basic fade-in logic - when element enters viewport
+      const viewportThreshold = isMobile ? 0.7 : 0.6;
+      const viewportBottom = isMobile ? 0.2 : 0.4;
+      const isInViewport = rect.top < windowHeight * viewportThreshold && rect.bottom > windowHeight * viewportBottom;
+      
+      const elementTop = rect.top + scrollY;
+      const currentScroll = scrollY + windowHeight * 0.5;
+      const elementDistance = currentScroll - elementTop;
+      
+      // STEP 1: Basic viewport fade-in
+      if (isInViewport) {
+        htmlElement.style.opacity = '1';
+        htmlElement.style.transform = 'translateY(0)';
+      } else {
+        htmlElement.style.opacity = '0';
+        htmlElement.style.transform = 'translateY(30px)';
+      }
+      
+      // STEP 2: Progressive fade-out logic (CRITICAL - this enforces max 1-2 paragraphs visible)
+      // This overrides the basic fade-in when we need to hide earlier paragraphs
+      
+      if (isMobile) {
+        // Mobile: More forgiving distances but still progressive
+        if (index === 1 && elementDistance > windowHeight * 0.3) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+        if (index === 2 && elementDistance > windowHeight * 0.5) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+        if (index === 3 && elementDistance > windowHeight * 0.7) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+        if (index === 4 && elementDistance > windowHeight * 0.9) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+      } else {
+        // Desktop: Original aggressive timing - max 2 paragraphs visible
+        if (index === 1 && elementDistance > windowHeight * 0.15) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+        if (index === 2 && elementDistance > windowHeight * 0.25) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+        if (index === 3 && elementDistance > windowHeight * 0.35) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+        if (index === 4 && elementDistance > windowHeight * 0.45) {
+          htmlElement.style.opacity = '0';
+          htmlElement.style.transform = 'translateY(-50px)';
+        }
+      }
+    });
+  };
+
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  handleScroll();
+  
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []);
+
+// ALSO UPDATE: Fix About button scroll targeting in Hero.tsx
+// Replace the About button onClick handler with this:
+
+const scrollToSection = (sectionId: string) => {
+  const element = document.getElementById(sectionId);
+  if (element) {
+    // Larger offset to show both header AND first paragraph
+    const yOffset = -200; // Increased from -435 to show more content
+    const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }
+};
 
   return (
     <div>
@@ -457,7 +483,7 @@ export default function HomePage() {
                       resize: 'vertical',
                       outline: 'none'
                     }} 
-                    placeholder="Tell me about your project..."
+                    placeholder="Tell me about your event..."
                     onFocus={(e) => {
                       e.target.style.background = 'rgba(255, 255, 255, 0.25)';
                       e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)';
