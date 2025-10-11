@@ -15,6 +15,7 @@ interface Performance {
   albumName: string;
   videoLength: string;
   createdAt: string;
+  uploadDate?: string;
   yesOrNo: boolean;
 }
 
@@ -62,7 +63,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       yesOrNo: 'no',
       spotifyId: '',
       genres: '',
-      uuid: generateUniqueUUID(), // AUTO-GENERATE UUID ON ROW CREATION
+      uuid: generateUniqueUUID(),
       status: 'pending'
     };
   }
@@ -86,20 +87,37 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   async function loadRecentEntries() {
     try {
-      const response = await fetch('https://timikeys.up.railway.app/api/v1/performances/search?q=&page=1&limit=100');
+      const response = await fetch('https://timikeys.up.railway.app/api/v1/performances?q=&page=1&limit=2000');
       if (!response.ok) {
         throw new Error('Failed to fetch recent entries');
       }
       
       const data = await response.json();
       const performances = data.data?.data || [];
+      // DEBUG: Check what fields are actually returned
+    console.log('🔍 First performance object:', performances[0]);
+    console.log('🔍 Available fields:', performances[0] ? Object.keys(performances[0]) : 'No performances');
+    
       
-      // Sort by video number descending (assuming higher = newer)
+      // Sort by upload date (newest first), fallback to video number if no upload date
       const sortedPerformances = performances
-        .sort((a: any, b: any) => (b.videoNumber || 0) - (a.videoNumber || 0))
+        .sort((a: any, b: any) => {
+          // Primary sort: upload date (newest first)
+          if (a.uploadDate && b.uploadDate) {
+            return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
+          }
+          
+          // If one has upload date and other doesn't, prioritize the one with upload date
+          if (a.uploadDate && !b.uploadDate) return -1;
+          if (!a.uploadDate && b.uploadDate) return 1;
+          
+          // Fallback sort: video number (highest first - assuming higher = newer)
+          return (b.videoNumber || 0) - (a.videoNumber || 0);
+        })
         .slice(0, 5);
       
       setRecentEntries(sortedPerformances);
+      console.log('Recent entries loaded and sorted by upload date:', sortedPerformances);
     } catch (error) {
       console.error('Error loading recent entries:', error);
       setRecentEntries([]);
@@ -127,6 +145,44 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
     return uuid.toUpperCase();
+  }
+
+  // Auto-populate video length from TikTok URL
+  async function populateVideoLength(rowId: string, tikTokUrl: string) {
+    if (!tikTokUrl.trim()) {
+      alert('Please enter a TikTok URL first');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      
+      const response = await fetch('/api/admin/extract-upload-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tikTokUrl })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.duration) {
+          // Convert seconds to MM:SS format
+          const minutes = Math.floor(parseInt(result.duration) / 60);
+          const seconds = parseInt(result.duration) % 60;
+          const formattedLength = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          
+          updateRowField(rowId, 'videoLength', formattedLength);
+          console.log('Video length populated:', formattedLength);
+        }
+      } else {
+        alert('Failed to get video duration');
+      }
+    } catch (error) {
+      console.error('Error getting video length:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      setProcessing(false);
+    }
   }
 
   async function fetchSpotifyData(rowId: string, songName: string) {
@@ -176,7 +232,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           console.error('Failed to fetch artist data:', artistError);
         }
 
-        // Update the row (UUID already exists)
+        // Update the row
         setRows(prevRows =>
           prevRows.map(row =>
             row.id === rowId
@@ -241,7 +297,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 artistName: track.artists.map((a: any) => a.name).join(', '),
                 albumName: track.album.name,
                 spotifyId: track.id,
-                genres: genres // Update genres too
+                genres: genres
               }
             : row
         )
@@ -272,15 +328,14 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
     const duplicatedRow: RowData = {
       ...sourceRow,
-      id: Math.random().toString(36).substr(2, 9), // New unique ID for React
-      uuid: generateUniqueUUID(), // New UUID for database
-      songName: '', // Clear song-specific fields
+      id: Math.random().toString(36).substr(2, 9),
+      uuid: generateUniqueUUID(),
+      songName: '',
       artistName: '',
       albumName: '',
       spotifyId: '',
       genres: '',
       status: 'pending'
-      // Keep: videoNumber, tikTokVideoLink, videoLength, yesOrNo (mashup status)
     };
 
     setRows(prevRows => [...prevRows, duplicatedRow]);
@@ -293,253 +348,197 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     }
   }
 
-  // In AdminDashboard.tsx, change the testDatabaseUpdate function:
-  async function testDatabaseUpdate() {
-    const tikTokUrl = prompt('Enter TikTok URL to test update:');
-    if (!tikTokUrl) return;
-  
-    try {
-      setProcessing(true);
-      
-      const response = await fetch('/api/admin/test-db-update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tikTokUrl })
-      });
-      
-      const result = await response.json();
-      console.log('Update result:', result);
-      
-      if (result.success) {
-        alert(`SUCCESS: ${result.message}
-  
-  📅 Upload Date: ${result.extractedUploadDate}
-  🎯 Total Found: ${result.totalFound}
-  ✅ Updated: ${result.successfulUpdates}
-  ❌ Failed: ${result.failedUpdates}`);
-      } else {
-        alert(`FAILED: ${result.message || result.error}`);
-      }
-      
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error: ' + error.message);
-    } finally {
-      setProcessing(false);
+  // Convert time format (0:30) to seconds
+  function convertTimeToSeconds(timeString: string): number {
+    if (!timeString) return 0;
+    const parts = timeString.split(':');
+    if (parts.length === 2) {
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
     }
+    return parseInt(timeString) || 0;
   }
 
-// Add this function to AdminDashboard.tsx
-async function batchUpdateAllDates() {
-  if (!confirm('This will extract upload dates for ALL TikTok videos in the database. This may take 10-20 minutes. Continue?')) {
-    return;
-  }
-
-  try {
-    setProcessing(true);
-    
-    const response = await fetch('/api/admin/batch-update-dates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    const result = await response.json();
-    console.log('Batch results:', result);
-    
-    if (result.success) {
-      alert(`BATCH UPDATE COMPLETE!
-
-📊 Stats:
-- Total URLs: ${result.stats.totalUrls}
-- Successful: ${result.stats.successfulExtractions} (${result.stats.successRate}%)
-- Failed: ${result.stats.failedExtractions}
-- Performances Updated: ${result.totalPerformancesUpdated}
-
-Check console for detailed results.`);
-      
-      // Refresh recent entries to see updated dates
-      await loadRecentEntries();
-    } else {
-      alert('Batch update failed: ' + result.error);
-    }
-    
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Error: ' + error.message);
-  } finally {
-    setProcessing(false);
-  }
-}
-async function testAudioUrlUpdate() {
-  const tikTokUrl = prompt('Enter TikTok URL to test overwrite:');
-  if (!tikTokUrl) return;
-
-  try {
-    setProcessing(true);
-    
-    const response = await fetch('/api/admin/test-audio-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tikTokUrl })
-    });
-    
-    const result = await response.json();
-    console.log('Audio URL overwrite test:', result);
-    
-    if (result.success) {
-      alert(`SUCCESS: ${result.message}
-
-🎵 Song: ${result.existingSong.songName}
-🔗 URL: ${result.providedUrl}
-🆔 Video ID: ${result.extractedVideoId}
-🎧 New Audio URL: ${result.newAudioUrl}`);
-    } else {
-      alert(`FAILED: ${result.message || result.error}`);
-    }
-    
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Error: ' + error.message);
-  } finally {
-    setProcessing(false);
-  }
-}
-
-  // TEST SINGLE UPLOAD DATE
-  async function testSingleUploadDate() {
-    const tikTokUrl = prompt('Enter a TikTok URL to test:');
-    if (!tikTokUrl) return;
-
-    try {
-      setProcessing(true);
-      
-      const response = await fetch('/api/admin/test-single-date', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tikTokUrl })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        
-        console.log('🧪 Test Results:', result);
-        
-        alert(`Single URL Test Results:
-
-📅 Upload Date: ${result.extractedData.uploadDate || 'Not found'}
-🎬 Title: ${result.extractedData.title}
-⏱️  Duration: ${result.extractedData.duration}s
-🎵 Matching Performances: ${result.foundPerformances}
-
-Check console for full details.`);
-      } else {
-        const errorData = await response.json();
-        alert('Test failed: ' + errorData.error);
-      }
-    } catch (error) {
-      console.error('Error testing upload date:', error);
-      alert('Error: ' + error.message);
-    } finally {
-      setProcessing(false);
-    }
-  }
-
-  // EXTRACT ALL UPLOAD DATES
-  async function fetchAllUploadDates() {
-    try {
-      setProcessing(true);
-      
-      const response = await fetch('/api/admin/fetch-upload-dates', {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        
-        alert(`Upload date extraction completed!
-        
-📊 Results:
-• Total URLs: ${result.stats.totalUrls}
-• Successful: ${result.stats.successfulExtractions} (${result.stats.successRate}%)
-• Failed: ${result.stats.failedExtractions}
-• Database updates needed: ${result.totalUpdateNeeded}
-
-Check console for detailed results.`);
-        
-        console.log('🎉 Upload date extraction results:', result);
-        
-        // Refresh recent entries 
-        await loadRecentEntries();
-      } else {
-        const errorData = await response.json();
-        alert('Failed to extract upload dates: ' + errorData.error);
-      }
-    } catch (error) {
-      console.error('Error fetching upload dates:', error);
-      alert('Error fetching upload dates: ' + error.message);
-    } finally {
-      setProcessing(false);
-    }
-  }
-
-  async function batchUpdateAudioUrls() {
-    if (!confirm('Update audioUrl for all existing songs? This will add Cloudflare R2 URLs to songs that don\'t have them.')) {
+  // CORE SUBMIT FUNCTION - MATCHES CODEPEN STRUCTURE
+  async function submitAllRows() {
+    if (rows.length === 0) {
+      alert('No songs to submit. Please add some songs first.');
       return;
     }
-  
-    try {
-      setProcessing(true);
-      
-      const response = await fetch('/api/admin/batch-update-audio-urls', {
-        method: 'POST'
-      });
-      
-      const result = await response.json();
-      console.log('Batch audio URL results:', result);
-      
-      if (result.success) {
-        alert(`BATCH AUDIO URL UPDATE COMPLETE!
-  
-  📊 Results:
-  - Songs Found: ${result.stats.totalSongsFound}
-  - Successfully Updated: ${result.stats.successfulUpdates}
-  - Failed: ${result.stats.failedUpdates}
-  - Success Rate: ${result.stats.successRate}%
-  
-  Check console for detailed results.`);
-      } else {
-        alert('Batch update failed: ' + result.error);
-      }
-      
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error: ' + error.message);
-    } finally {
-      setProcessing(false);
+
+    if (!confirm(`Ready to submit ${rows.length} song(s) with full automation?\n\nThis will:\n• Extract upload dates from TikTok\n• Download and upload MP3s to R2\n• Submit to database\n\nProceed?`)) {
+      return;
     }
-  }
-  async function submitAllRows() {
+
     setProcessing(true);
     
     try {
-      const response = await fetch('/api/admin/submit-songs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ songs: rows })
-      });
+      console.log('🚀 Starting automated submission for', rows.length, 'songs...');
+      
+      const results = {
+        total: rows.length,
+        successful: 0,
+        failed: 0,
+        errors: [],
+        details: []
+      };
 
-      if (response.ok) {
-        const result = await response.json();
-        alert(`Processing complete! Success: ${result.success}, Errors: ${result.errors}`);
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        console.log(`\n📝 Processing song ${i + 1}/${rows.length}: ${row.songName}`);
         
-        await loadInitialData();
-        setRows([createEmptyRow()]);
-      } else {
-        alert('Error submitting songs');
+        try {
+          // Step 1: Extract upload date from TikTok URL
+          let uploadDate = null;
+          if (row.tikTokVideoLink) {
+            console.log('📅 Extracting upload date...');
+            const dateResponse = await fetch('/api/admin/extract-upload-date', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tikTokUrl: row.tikTokVideoLink })
+            });
+
+            if (dateResponse.ok) {
+              const dateResult = await dateResponse.json();
+              uploadDate = new Date(dateResult.uploadDate + 'T00:00:00.000Z').toISOString();
+              console.log('✅ Upload date extracted:', uploadDate);
+            } else {
+              console.warn('⚠️  Failed to extract upload date for', row.songName);
+              results.errors.push(`Upload date extraction failed for ${row.songName}`);
+            }
+          }
+
+          // Step 2: Download MP3 and upload to R2
+          let audioUrl = null;
+          if (row.tikTokVideoLink) {
+            console.log('🎵 Processing MP3 download/upload...');
+            const mp3Response = await fetch('/api/admin/download-upload-mp3', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tikTokUrl: row.tikTokVideoLink })
+            });
+
+            if (mp3Response.ok) {
+              const mp3Result = await mp3Response.json();
+              audioUrl = mp3Result.audioUrl;
+              console.log('✅ MP3 processed:', mp3Result.cached ? '(cached)' : '(new download)', audioUrl);
+            } else {
+              console.warn('⚠️  Failed to process MP3 for', row.songName);
+              results.errors.push(`MP3 processing failed for ${row.songName}`);
+            }
+          }
+
+          // Step 3: Prepare data for submission (MATCHING CODEPEN STRUCTURE)
+          const genresArray = row.genres ? row.genres.split(',').map(g => g.trim()) : [];
+          
+          const performanceData = {
+            videoNumber: parseInt(row.videoNumber) || 0,
+            videoURL: row.tikTokVideoLink, // Note: videoURL not tiktokVideoLink
+            songName: row.songName,
+            artistName: row.artistName,
+            albumName: row.albumName,
+            yesOrNo: row.yesOrNo === 'yes', // Note: yesOrNo not YesNo
+            videoLength: row.videoLength || '',
+            videoLengthInSeconds: convertTimeToSeconds(row.videoLength || '0'),
+            mainGenre: genresArray[0] || '',
+            subGenre: genresArray[1] || '',
+            otherGenres: genresArray.slice(2) || [],
+            uploadDate: uploadDate
+          };
+
+          const songData = {
+            id: row.uuid, // UUID for songs
+            videoNo: parseInt(row.videoNumber) || 0,
+            tiktokVideoLink: row.tikTokVideoLink,
+            songName: row.songName,
+            artistName: row.artistName,
+            albumName: row.albumName,
+            videoLength: row.videoLength || '',
+            YesNo: row.yesOrNo === 'yes', // Note: YesNo not yesOrNo
+            spotifyId: row.spotifyId,
+            audioUrl: audioUrl
+          };
+
+          // Step 4: Submit to backend (performances table)
+          console.log('📤 Submitting to performances table...');
+          const performanceResponse = await fetch('https://timikeys.up.railway.app/api/v1/performances/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(performanceData)
+          });
+
+          if (!performanceResponse.ok) {
+            const errorText = await performanceResponse.text();
+            throw new Error(`Performance submission failed: ${errorText}`);
+          }
+
+          // Step 5: Submit to backend (songs table)
+          console.log('📤 Submitting to songs table...');
+          const songResponse = await fetch('https://timikeys.up.railway.app/api/v1/songs/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(songData)
+          });
+
+          if (!songResponse.ok) {
+            const errorText = await songResponse.text();
+            throw new Error(`Song submission failed: ${errorText}`);
+          }
+
+          console.log('✅ Successfully submitted:', row.songName);
+          results.successful++;
+          results.details.push({
+            song: row.songName,
+            uploadDate,
+            audioUrl,
+            status: 'success'
+          });
+
+        } catch (error) {
+          console.error(`❌ Failed to process ${row.songName}:`, error);
+          results.failed++;
+          results.errors.push(`${row.songName}: ${error.message}`);
+          results.details.push({
+            song: row.songName,
+            status: 'failed',
+            error: error.message
+          });
+        }
       }
+
+      // Show comprehensive results
+      const successRate = Math.round((results.successful / results.total) * 100);
+      
+      let alertMessage = `🎉 SUBMISSION COMPLETE!\n\n`;
+      alertMessage += `📊 Results:\n`;
+      alertMessage += `• Total songs: ${results.total}\n`;
+      alertMessage += `• Successful: ${results.successful} (${successRate}%)\n`;
+      alertMessage += `• Failed: ${results.failed}\n\n`;
+      
+      if (results.errors.length > 0) {
+        alertMessage += `⚠️  Errors:\n${results.errors.slice(0, 3).join('\n')}`;
+        if (results.errors.length > 3) {
+          alertMessage += `\n... and ${results.errors.length - 3} more (check console)`;
+        }
+      }
+
+      alert(alertMessage);
+
+      console.log('🎯 Complete submission results:', results);
+
+      // Clear the form if all submissions were successful
+      if (results.failed === 0) {
+        setRows([createEmptyRow()]);
+        setSearchResults([]);
+        setCurrentResultIndex(0);
+        console.log('🧹 Form cleared after successful submission');
+      }
+
+      // Refresh recent entries to show new submissions
+      await loadRecentEntries();
+
     } catch (error) {
-      console.error('Error submitting songs:', error);
-      alert('Error submitting songs');
+      console.error('💥 Critical submission error:', error);
+      alert(`Critical error during submission: ${error.message}\n\nCheck console for details.`);
     } finally {
       setProcessing(false);
     }
@@ -669,7 +668,7 @@ Check console for detailed results.`);
             marginBottom: '15px',
             color: '#2c3e50'
           }}>
-            📈 Recent Entries (by video number)
+            📈 Recent Entries (by upload date)
           </h3>
           
           {recentEntries.length === 0 ? (
@@ -706,14 +705,20 @@ Check console for detailed results.`);
                   textAlign: 'right'
                 }}>
                   Video #{entry.videoNumber}<br />
-                  {entry.videoLength}
+                  {entry.uploadDate ? (
+                    <span style={{ color: '#28a745' }}>
+                      {new Date(entry.uploadDate).toLocaleDateString()}
+                    </span>
+                  ) : (
+                    <span style={{ color: '#dc3545' }}>No upload date</span>
+                  )}
                 </div>
               </div>
             ))
           )}
         </div>
 
-        {/* Controls */}
+        {/* MAIN CONTROLS - CORE FUNCTIONALITY */}
         <div style={{
           display: 'flex',
           gap: '15px',
@@ -749,97 +754,6 @@ Check console for detailed results.`);
             ➕ Add Row
           </button>
           <button
-            onClick={testSingleUploadDate}
-            disabled={processing}
-            style={{
-              padding: '12px 24px',
-              background: processing ? '#6c757d' : '#9b59b6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: processing ? 'not-allowed' : 'pointer',
-              fontWeight: '600'
-            }}
-          >
-            {processing ? '⏳ Testing...' : '🧪 Test Single URL'}
-          </button>
-          <button
-            onClick={batchUpdateAllDates}
-            disabled={processing}
-            style={{
-              padding: '12px 24px',
-              background: '#e74c3c',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: processing ? 'not-allowed' : 'pointer',
-              fontWeight: '600',
-              opacity: processing ? 0.6 : 1
-            }}
-          > 
-            🚀 UPDATE ALL UPLOAD DATES
-          </button>
-          <button
-            onClick={testDatabaseUpdate}
-            disabled={processing}
-            style={{
-              padding: '12px 24px',
-              background: processing ? '#6c757d' : '#8e44ad',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: processing ? 'not-allowed' : 'pointer',
-              fontWeight: '600'
-            }}
-          >
-            {processing ? '⏳ Testing DB...' : '🗄️ Test DB Update'}
-          </button>
-          <button
-            onClick={fetchAllUploadDates}
-            disabled={processing}
-            style={{
-              padding: '12px 24px',
-              background: processing ? '#6c757d' : '#e67e22',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: processing ? 'not-allowed' : 'pointer',
-              fontWeight: '600'
-            }}
-          >
-            {processing ? '⏳ Extracting...' : '📅 Extract Upload Dates'}
-          </button>
-          <button
-          onClick={batchUpdateAudioUrls}
-          disabled={processing}
-          style={{
-            padding: '12px 24px',
-            background: '#e67e22',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: processing ? 'not-allowed' : 'pointer',
-            fontWeight: '600'
-          }}
-        >
-          🎧 Update All Audio URLs
-        </button>
-          <button
-            onClick={testAudioUrlUpdate}
-            disabled={processing}
-            style={{
-              padding: '12px 24px',
-              background: '#9b59b6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: processing ? 'not-allowed' : 'pointer',
-              fontWeight: '600'
-            }}
-          >
-            🎧 Test Audio URL Update
-          </button>
-          <button
             onClick={submitAllRows}
             disabled={processing}
             style={{
@@ -849,12 +763,34 @@ Check console for detailed results.`);
               border: 'none',
               borderRadius: '8px',
               cursor: processing ? 'not-allowed' : 'pointer',
-              fontWeight: '600'
+              fontWeight: '600',
+              fontSize: '16px'
             }}
           >
-            {processing ? '⏳ Processing...' : '🚀 Submit All'}
+            {processing ? '⏳ Processing...' : '🚀 Submit All Songs'}
           </button>
         </div>
+
+        {/* COMMENTED OUT TESTING BUTTONS */}
+        {/*
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          flexWrap: 'wrap',
+          marginBottom: '20px',
+          padding: '15px',
+          background: 'rgba(255, 255, 255, 0.03)',
+          borderRadius: '8px',
+          border: '1px solid rgba(255, 255, 255, 0.05)'
+        }}>
+          <button onClick={testSingleUploadDate}>🧪 Test Single URL</button>
+          <button onClick={batchUpdateAllDates}>🚀 UPDATE ALL UPLOAD DATES</button>
+          <button onClick={testDatabaseUpdate}>🗄️ Test DB Update</button>
+          <button onClick={fetchAllUploadDates}>📅 Extract Upload Dates</button>
+          <button onClick={batchUpdateAudioUrls}>🎧 Update All Audio URLs</button>
+          <button onClick={testAudioUrlUpdate}>🎧 Test Audio URL Update</button>
+        </div>
+        */}
 
         {/* Song Entry Table */}
         <div style={{ overflowX: 'auto' }}>
@@ -954,18 +890,36 @@ Check console for detailed results.`);
                     />
                   </td>
                   <td style={{ padding: '12px' }}>
-                    <input
-                      type="text"
-                      value={row.videoLength}
-                      onChange={(e) => updateRowField(row.id, 'videoLength', e.target.value)}
-                      placeholder="0:30"
-                      style={{
-                        width: '80px',
-                        padding: '8px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px'
-                      }}
-                    />
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input
+                        type="text"
+                        value={row.videoLength}
+                        onChange={(e) => updateRowField(row.id, 'videoLength', e.target.value)}
+                        placeholder="0:30"
+                        style={{
+                          width: '60px',
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px'
+                        }}
+                      />
+                      <button
+                        onClick={() => populateVideoLength(row.id, row.tikTokVideoLink)}
+                        disabled={processing || !row.tikTokVideoLink}
+                        style={{
+                          padding: '4px 8px',
+                          background: '#ffc107',
+                          color: 'black',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          cursor: 'pointer'
+                        }}
+                        title="Auto-populate from video"
+                      >
+                        ⏱️
+                      </button>
+                    </div>
                   </td>
                   <td style={{ padding: '12px' }}>
                     <select

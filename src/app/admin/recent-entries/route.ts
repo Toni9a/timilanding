@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const response = await fetch('https://timikeys.up.railway.app/api/v1/performances/search?limit=10&sort=newest');
+    const response = await fetch('https://timikeys.up.railway.app/api/v1/performances/limit=2000&sort=newest');
     if (!response.ok) {
       throw new Error('Failed to fetch recent entries');
     }
