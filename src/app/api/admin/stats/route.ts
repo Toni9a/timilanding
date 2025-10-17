@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // Get total count by searching all performances
-    const totalResponse = await fetch('https://timikeys.up.railway.app/api/v1/performances/search?q=&limit=1');
+    const totalResponse = await fetch('https://timikeys.up.railway.app/api/v1/performances/search?limit=1');
     const totalData = await totalResponse.json();
     const total = totalData.data?.total || 0;
 
-    // For "today's count", we'll use a placeholder since we don't have dates yet
-    // Once you implement TikTok upload dates, you can filter by today's date
-    const todayCount = 0; // Placeholder
+    const today = new Date().toISOString().split('T')[0];
+    const todayResponse = await fetch(`https://timikeys.up.railway.app/api/v1/performances/search?date=${today}&limit=1`);
+    const todayData = await todayResponse.json();
+    const todayCount = todayData.data?.total || 0;
 
     return NextResponse.json({
       total,
