@@ -95,9 +95,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
       const data = await response.json();
       const performances = data.data?.data || [];
       // DEBUG: Check what fields are actually returned
-    console.log('🔍 First performance object:', performances[0]);
-    console.log('🔍 Available fields:', performances[0] ? Object.keys(performances[0]) : 'No performances');
-    
+      console.log('🔍 First performance object:', performances[0]);
+      console.log('🔍 Available fields:', performances[0] ? Object.keys(performances[0]) : 'No performances');
       
       // Sort by upload date (newest first), fallback to video number if no upload date
       const sortedPerformances = performances
@@ -388,6 +387,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         
         try {
           // Step 1: Extract upload date from TikTok URL
+          // ✅ STEP 1: Extract upload date from TikTok URL
           let uploadDate = null;
           if (row.tikTokVideoLink) {
             console.log('📅 Extracting upload date...');
@@ -402,12 +402,20 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               uploadDate = new Date(dateResult.uploadDate + 'T00:00:00.000Z').toISOString();
               console.log('✅ Upload date extracted:', uploadDate);
             } else {
-              console.warn('⚠️  Failed to extract upload date for', row.songName);
-              results.errors.push(`Upload date extraction failed for ${row.songName}`);
+              // ❌ CRITICAL ERROR - Stop everything
+              const errorMsg = `❌ CRITICAL: Failed to extract upload date for "${row.songName}"`;
+              console.error(errorMsg);
+              alert(`${errorMsg}\n\nSubmission STOPPED.\n\nPossible fixes:\n1. Restart dev server (npm run dev)\n2. Check yt-dlp works in terminal\n3. Verify TikTok URL is correct`);
+              setProcessing(false);
+              return; // STOP EVERYTHING
             }
+          } else {
+            alert(`❌ No TikTok URL for "${row.songName}". Submission stopped.`);
+            setProcessing(false);
+            return;
           }
 
-          // Step 2: Download MP3 and upload to R2
+          // ✅ STEP 2: Download MP3 and upload to R2
           let audioUrl = null;
           if (row.tikTokVideoLink) {
             console.log('🎵 Processing MP3 download/upload...');
@@ -421,10 +429,28 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               const mp3Result = await mp3Response.json();
               audioUrl = mp3Result.audioUrl;
               console.log('✅ MP3 processed:', mp3Result.cached ? '(cached)' : '(new download)', audioUrl);
+              
+              // ❌ REMOVED CORS VERIFICATION SECTION - Backend already verifies the upload
+              
             } else {
-              console.warn('⚠️  Failed to process MP3 for', row.songName);
-              results.errors.push(`MP3 processing failed for ${row.songName}`);
+              const errorMsg = `❌ CRITICAL: Failed to process MP3 for "${row.songName}"`;
+              alert(`${errorMsg}\n\nSubmission STOPPED.\n\nFixes:\n1. Restart dev server\n2. Check R2 credentials\n3. Test yt-dlp in terminal`);
+              setProcessing(false);
+              return; // STOP EVERYTHING
             }
+          }
+
+          // ✅ STEP 3: Final validation
+          if (!uploadDate) {
+            alert(`❌ Upload date is null for "${row.songName}". Submission STOPPED.`);
+            setProcessing(false);
+            return;
+          }
+
+          if (!audioUrl) {
+            alert(`❌ Audio URL is null for "${row.songName}". Submission STOPPED.`);
+            setProcessing(false);
+            return;
           }
 
           // Step 3: Prepare data for submission (MATCHING CODEPEN STRUCTURE)
