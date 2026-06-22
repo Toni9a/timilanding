@@ -40,10 +40,39 @@ export default function Hero() {
         html {
           scroll-behavior: smooth;
         }
-        
+
         @media (prefers-reduced-motion: no-preference) {
           html {
             scroll-behavior: smooth;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .nav-buttons {
+            gap: 8px !important;
+          }
+          .nav-buttons .nav-about-btn {
+            display: none !important;
+          }
+          .nav-buttons .listen-now-text {
+            display: none !important;
+          }
+          .nav-buttons .listen-now-btn {
+            width: 36px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: rgba(255, 255, 255, 0.15) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: none !important;
+          }
+          .nav-buttons .listen-now-btn svg {
+            width: 14px !important;
+            height: 14px !important;
           }
         }
       `}</style>
@@ -178,8 +207,33 @@ export default function Hero() {
         </div>
         
         {/* Nav buttons */}
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <button 
+        <div className="nav-buttons" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          <button
+            className="listen-now-btn"
+            onClick={() => window.location.href = '/explore?audio=true'}
+            style={{
+              background: scrollProgress > 0.5 ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+              border: 'none',
+              color: scrollProgress > 0.5 ? 'white' : 'black',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '16px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={scrollProgress > 0.5 ? 'white' : 'black'} stroke="none">
+              <polygon points="5,3 19,12 5,21" />
+            </svg>
+            <span className="listen-now-text">Listen Now</span>
+          </button>
+          <button
+            className="nav-about-btn"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -200,7 +254,7 @@ export default function Hero() {
           >
             About
           </button>
-          <button 
+          <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

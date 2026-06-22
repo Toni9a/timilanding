@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     // Step 1: Download audio using yt-dlp
     const outputTemplate = path.join(tempDir, `${tikTokId}.%(ext)s`);
     const escapedUrl = tikTokUrl.replace(/'/g, "'\"'\"'");
-    const downloadCommand = `yt-dlp -x --audio-format mp3 --output "${outputTemplate}" '${escapedUrl}'`;
+    const downloadCommand = `yt-dlp -f "bv*[vcodec^=h264]+ba/b[vcodec^=h264]/bv*+ba/b" -x --audio-format mp3 --output "${outputTemplate}" '${escapedUrl}'`;
     
     console.log(`⬇️ Downloading audio for video ID: ${tikTokId}`);
     await execAsync(downloadCommand, { 

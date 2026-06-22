@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import SocialMediaIcons from '../../components/SocialMediaIcons';
@@ -48,6 +49,14 @@ interface AutocompleteOption {
 }
 
 export default function ExplorePage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'black' }} />}>
+      <ExploreContent />
+    </Suspense>
+  );
+}
+
+function ExploreContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Performance[]>([]);
   const [playerTracks, setPlayerTracks] = useState<Performance[]>([]);
@@ -71,7 +80,9 @@ export default function ExplorePage() {
     genres: new Set()
   });
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+  const [videoMashupMap, setVideoMashupMap] = useState<Map<number, Performance[]>>(new Map());
 
+  const searchParams = useSearchParams();
   const [audioOnly, setAudioOnly] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number | null>(null);
@@ -83,6 +94,55 @@ export default function ExplorePage() {
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const API_BASE = 'https://timikeys.up.railway.app';
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  const placeholderSuggestions = [
+    'Try "Drake"',
+    'Try "r&b"',
+    'Try "Radiohead"',
+    'Try "neo soul"',
+    'Try "Frank Ocean"',
+    'Try "soundtrack"',
+    'Try "Billie Eilish"',
+    'Try "boom bap"',
+    'Try "Kanye West"',
+    'Try "rock"',
+    'Try "Daniel Caesar"',
+    'Try "uk rap"',
+    'Try "Tyler, The Creator"',
+    'Try "pop"',
+    'Try "Hans Zimmer"',
+    'Try "jazz rap"',
+    'Try "SZA"',
+    'Try "melodic drill"',
+    'Try "The Weeknd"',
+    'Try "Michael Jackson"',
+    'Try "Kendrick Lamar"',
+    'Try "Sade"',
+    'Try "Ariana Grande"',
+    'Try "Mac Miller"',
+    'Try "Coldplay"',
+    'Try "Childish Gambino"',
+    'Try "Rex Orange County"',
+    'Try "Clairo"',
+    'Try "Prince"',
+    'Try "Justin Bieber"',
+    'Try "OutKast"',
+  ];
+
+  useEffect(() => {
+    if (searchQuery || showResults) return;
+    const interval = setInterval(() => {
+      setPlaceholderIndex(prev => (prev + 1) % placeholderSuggestions.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [searchQuery, showResults]);
+
+  useEffect(() => {
+    if (searchParams.get('audio') === 'true') {
+      setAudioOnly(true);
+    }
+  }, [searchParams]);
 
   const loadingMessages = [
     "Fetching those notes...",
@@ -93,7 +153,6 @@ export default function ExplorePage() {
     "Checking the music library..."
   ];
 
-  // Detect mashup songs more reliably - check YesNo, videoNo, and audioUrl
   useEffect(() => {
     if (currentTrackIndex === null || !playerTracks[currentTrackIndex]) {
       setMashupSongs([]);
@@ -102,37 +161,19 @@ export default function ExplorePage() {
     }
 
     const currentTrack = playerTracks[currentTrackIndex];
-    
-    // Find songs that are part of this mashup
-    let mashupTracks: Performance[] = [];
-    
-    // Method 1: Check if YesNo is false (preferred)
-    if (!currentTrack.YesNo) {
-      mashupTracks = playerTracks.filter(
-        t => t.videoNo === currentTrack.videoNo && !t.YesNo
-      );
-    }
-    
-    // Method 2: If no mashup found, check for same audioUrl
-    if (mashupTracks.length <= 1 && currentTrack.audioUrl) {
-      mashupTracks = playerTracks.filter(
-        t => t.audioUrl === currentTrack.audioUrl
-      );
-    }
-    
-    // Method 3: If still nothing, check for same videoNo
-    if (mashupTracks.length <= 1) {
-      mashupTracks = playerTracks.filter(
-        t => t.videoNo === currentTrack.videoNo && t.songName !== currentTrack.songName
-      );
-      if (mashupTracks.length > 0) {
-        mashupTracks = [currentTrack, ...mashupTracks];
-      }
-    }
+    const siblings = videoMashupMap.get(currentTrack.videoNo) || [];
 
-    setMashupSongs(mashupTracks.length > 1 ? mashupTracks : []);
+    if (siblings.length > 1) {
+      const currentFirst = [
+        currentTrack,
+        ...siblings.filter(s => s.id !== currentTrack.id)
+      ];
+      setMashupSongs(currentFirst);
+    } else {
+      setMashupSongs([]);
+    }
     setAnimatedSongIndex(0);
-  }, [currentTrackIndex, playerTracks]);
+  }, [currentTrackIndex, playerTracks, videoMashupMap]);
 
   // Animate through mashup songs with smart timing
   useEffect(() => {
@@ -173,6 +214,13 @@ export default function ExplorePage() {
         });
         
         setPreloadedData({ artists, songs, albums, genres });
+
+        const videoMap = new Map<number, Performance[]>();
+        performances.forEach(perf => {
+          if (!videoMap.has(perf.videoNo)) videoMap.set(perf.videoNo, []);
+          videoMap.get(perf.videoNo)!.push(perf);
+        });
+        setVideoMashupMap(videoMap);
       } catch (error) {
         console.error('Failed to preload search data:', error);
       }
@@ -316,18 +364,18 @@ export default function ExplorePage() {
           });
           const trackData = await albumResponse.json();
           const albumId = trackData.album?.id;
-          
+
           if (albumId) {
             const trackOrder = await getAlbumTrackOrder(albumId, token);
             albumSongs.sort((a, b) => (trackOrder[a.spotifyId] || 999) - (trackOrder[b.spotifyId] || 999));
             const otherSongs = processed.filter(p => !p.albumName?.toLowerCase().includes(albumName));
             processed = [...albumSongs, ...otherSongs];
-            if (albumSongs[0]) await fetchAlbumCover(albumSongs[0].albumName, albumSongs[0].artistName);
           }
         }
       } catch (error) {
         console.error('Failed to sort by album order:', error);
       }
+      await fetchAlbumCover(albumSongs[0].albumName, albumSongs[0].artistName.split(',')[0].trim());
     } else {
       const songGroups = new Map<string, Performance[]>();
       processed.forEach(perf => {
@@ -348,6 +396,12 @@ export default function ExplorePage() {
       processed = sortedGroups;
     }
     
+    processed.sort((a, b) => {
+      const aStandalone = (videoMashupMap.get(a.videoNo)?.length ?? 1) === 1 ? 0 : 1;
+      const bStandalone = (videoMashupMap.get(b.videoNo)?.length ?? 1) === 1 ? 0 : 1;
+      return aStandalone - bStandalone;
+    });
+
     return processed;
   };
 
@@ -364,13 +418,33 @@ export default function ExplorePage() {
     
     setTimeout(async () => {
       try {
-        const searchParams = new URLSearchParams({ q: query.trim(), page: '1', limit: '3000' });
+        const trimmed = query.trim();
+        const searchParams = new URLSearchParams({ q: trimmed, page: '1', limit: '3000' });
         const response = await fetch(`${API_BASE}/api/v1/performances/search?${searchParams}`);
         if (!response.ok) throw new Error(`Search failed: ${response.status} ${response.statusText}`);
 
         const data: SearchResponse = await response.json();
-        const rawPerformances = data.data?.data || [];
-        const sortedPerformances = await smartSortPerformances(rawPerformances, query.trim());
+        let rawPerformances = data.data?.data || [];
+
+        if (rawPerformances.length === 0 && trimmed.includes(' ')) {
+          const words = trimmed.split(/\s+/).filter(w => w.length > 1);
+          if (words.length > 1) {
+            const params = new URLSearchParams({ q: words[0], page: '1', limit: '3000' });
+            const res = await fetch(`${API_BASE}/api/v1/performances/search?${params}`);
+            if (res.ok) {
+              const d: SearchResponse = await res.json();
+              const firstResults = d.data?.data || [];
+              const otherWords = words.slice(1).map(w => w.toLowerCase());
+              rawPerformances = firstResults.filter(p => {
+                const artist = p.artistName?.toLowerCase() || '';
+                const song = p.songName?.toLowerCase() || '';
+                return otherWords.every(w => artist.includes(w) || song.includes(w));
+              });
+            }
+          }
+        }
+
+        const sortedPerformances = await smartSortPerformances(rawPerformances, trimmed);
         
         setSearchResults(sortedPerformances);
         
@@ -431,44 +505,10 @@ export default function ExplorePage() {
     audioRef.current.play();
     setIsPlaying(true);
     
-    // Check if this track is part of a mashup and reorder it
-    let mashupTracksForThisSong: Performance[] = [];
-    
-    // Method 1: Check if YesNo is false
-    if (!track.YesNo) {
-      mashupTracksForThisSong = playerTracks.filter(
-        t => t.videoNo === track.videoNo && !t.YesNo
-      );
-    }
-    
-    // Method 2: Check for same audioUrl
-    if (mashupTracksForThisSong.length <= 1 && track.audioUrl) {
-      mashupTracksForThisSong = playerTracks.filter(
-        t => t.audioUrl === track.audioUrl
-      );
-    }
-    
-    // Method 3: Check for same videoNo
-    if (mashupTracksForThisSong.length <= 1) {
-      mashupTracksForThisSong = playerTracks.filter(
-        t => t.videoNo === track.videoNo && t.songName !== track.songName
-      );
-      if (mashupTracksForThisSong.length > 0) {
-        mashupTracksForThisSong = [track, ...mashupTracksForThisSong];
-      }
-    }
-    
-    // If this is a mashup, reorder to show clicked song first
-    if (mashupTracksForThisSong.length > 1) {
-      const clickedSongIdx = mashupTracksForThisSong.findIndex(s => s.id === track.id);
-      if (clickedSongIdx !== -1) {
-        const reorderedMashup = [
-          ...mashupTracksForThisSong.slice(clickedSongIdx),
-          ...mashupTracksForThisSong.slice(0, clickedSongIdx)
-        ];
-        setMashupSongs(reorderedMashup);
-        setAnimatedSongIndex(0);
-      }
+    const siblings = videoMashupMap.get(track.videoNo) || [];
+    if (siblings.length > 1) {
+      setMashupSongs([track, ...siblings.filter(s => s.id !== track.id)]);
+      setAnimatedSongIndex(0);
     }
   };
 
@@ -519,6 +559,12 @@ export default function ExplorePage() {
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden', background: 'black' }}>
+      <style>{`
+        input::placeholder {
+          color: rgba(255, 255, 255, 0.55) !important;
+          font-style: italic;
+        }
+      `}</style>
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
         <img src="/timi-clean.png" alt="Background" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         {albumCoverUrl && showResults && (
@@ -611,15 +657,6 @@ export default function ExplorePage() {
           transition={{ duration: 1, delay: 0.3 }}
         >
           <div style={{
-            position: 'absolute', inset: '-2px', borderRadius: '26px',
-            background: showResults && scrollProgress < 1
-              ? `conic-gradient(from 0deg, #8B5CF6 ${scrollProgress * 360}deg, transparent ${scrollProgress * 360}deg)`
-              : 'transparent',
-            opacity: showResults && scrollProgress < 1 ? 1 : 0,
-            transition: 'opacity 0.3s ease', zIndex: 0
-          }} />
-          
-          <div style={{
             position: 'relative', background: 'rgba(255, 255, 255, 0.15)',
             backdropFilter: 'blur(20px)', borderRadius: '24px',
             border: '1px solid rgba(255, 255, 255, 0.3)', padding: '0',
@@ -631,18 +668,19 @@ export default function ExplorePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search artists, songs, albums..."
+              placeholder={!searchQuery ? placeholderSuggestions[placeholderIndex] : ''}
               maxLength={50}
               style={{
                 width: '100%', padding: '18px 70px 18px 24px', fontSize: '18px',
                 border: 'none', outline: 'none', background: 'transparent',
-                color: 'white', fontWeight: '400', zIndex: 2
+                color: 'rgba(255, 255, 255, 0.95)', fontWeight: '400', zIndex: 2,
+                caretColor: 'white'
               }}
             />
             {currentAutocomplete && !showResults && searchQuery && (
               <div style={{
                 position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)',
-                pointerEvents: 'none', color: 'rgba(255, 255, 255, 0.35)', fontSize: '18px',
+                pointerEvents: 'none', color: 'rgba(255, 255, 255, 0.5)', fontSize: '18px',
                 whiteSpace: 'nowrap', overflow: 'hidden'
               }}>
                 <span style={{ opacity: 0 }}>{searchQuery}</span>
@@ -769,12 +807,6 @@ export default function ExplorePage() {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                       <span style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>{result.songName}</span>
-                      {!result.YesNo && (
-                        <span style={{
-                          width: '8px', height: '8px', borderRadius: '50%', background: '#FCD34D',
-                          display: 'inline-block', boxShadow: '0 0 8px rgba(252, 211, 77, 0.6)'
-                        }} title="Mashup" />
-                      )}
                     </div>
                     <div style={{ color: 'rgba(255, 255, 255, 0.65)', fontSize: '14px' }}>
                       {result.artistName}
@@ -782,6 +814,22 @@ export default function ExplorePage() {
                         <span style={{ marginLeft: '12px', opacity: 0.5 }}>{displayDuration(result.videoLength)}</span>
                       )}
                     </div>
+                    {(() => {
+                      const siblings = videoMashupMap.get(result.videoNo);
+                      if (!siblings || siblings.length <= 1) return null;
+                      const others = siblings
+                        .filter(s => s.songName !== result.songName)
+                        .map(s => s.songName)
+                        .filter((name, i, arr) => arr.indexOf(name) === i)
+                        .slice(0, 3);
+                      if (others.length === 0) return null;
+                      return (
+                        <div style={{ fontSize: '12px', marginTop: '4px' }}>
+                          <span style={{ color: '#FCD34D', fontWeight: '500' }}>with </span>
+                          <span style={{ color: 'rgba(255, 255, 255, 0.55)' }}>{others.join(', ')}{siblings.length > 4 ? ` +${siblings.length - 4} more` : ''}</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                   {audioOnly && result.audioUrl && (
                     <Play size={20} style={{ color: 'rgba(255, 255, 255, 0.7)', flexShrink: 0, marginLeft: '12px' }} />
@@ -890,14 +938,21 @@ export default function ExplorePage() {
               <SkipForward size={18} color="white" />
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', width: '100%', justifyContent: 'center' }}>
-            <span style={{ color: 'white', fontSize: '11px', fontWeight: '500' }}>Audio</span>
-            <button onClick={() => { setAudioOnly(!audioOnly); if (audioOnly && isPlaying) { audioRef.current?.pause(); setIsPlaying(false); } }} style={{ 
-              width: '40px', height: '22px', borderRadius: '11px', background: audioOnly ? '#8B5CF6' : 'rgba(255, 255, 255, 0.2)', 
-              border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s ease' 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0px', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', width: '100%', justifyContent: 'center' }}>
+            <span
+              onClick={() => { if (audioOnly) { setAudioOnly(false); if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); } } }}
+              style={{ color: !audioOnly ? 'white' : 'rgba(255, 255, 255, 0.3)', fontSize: '11px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.3s ease' }}
+            >Video</span>
+            <button onClick={() => { setAudioOnly(!audioOnly); if (audioOnly && isPlaying) { audioRef.current?.pause(); setIsPlaying(false); } }} style={{
+              width: '40px', height: '22px', borderRadius: '11px', background: audioOnly ? '#8B5CF6' : 'rgba(255, 255, 255, 0.2)',
+              border: 'none', position: 'relative', cursor: 'pointer', transition: 'all 0.3s ease', margin: '0 8px'
             }}>
               <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'white', position: 'absolute', top: '3px', left: audioOnly ? '21px' : '3px', transition: 'all 0.3s ease', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }} />
             </button>
+            <span
+              onClick={() => { if (!audioOnly) { setAudioOnly(true); } }}
+              style={{ color: audioOnly ? 'white' : 'rgba(255, 255, 255, 0.3)', fontSize: '11px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.3s ease' }}
+            >Audio</span>
           </div>
         </motion.div>
       )}
