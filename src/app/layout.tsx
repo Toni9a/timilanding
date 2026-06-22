@@ -5,9 +5,12 @@ export const metadata: Metadata = {
   title: 'Timikeys',
   description: 'Professional pianist and composer',
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    shortcut: '/favicon-32.png',
+    apple: '/apple-touch-icon.png',
   },
 }
 
@@ -25,8 +28,9 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="shortcut icon" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+        <link rel="shortcut icon" href="/favicon-32.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link href="https://fonts.cdnfonts.com/css/parisian" rel="stylesheet" />
       </head>
       <body>{children}</body>
