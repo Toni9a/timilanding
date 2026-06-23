@@ -11,7 +11,13 @@ interface Photo {
   votes?: number;
 }
 
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'timikeys2024';
+
 export default function GalleryEdit() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(true);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -20,10 +26,31 @@ export default function GalleryEdit() {
   const [mode, setMode] = useState<'vote' | 'list'>('vote');
 
   useEffect(() => {
+    const auth = sessionStorage.getItem('admin_auth');
+    if (auth === 'authenticated') {
+      setIsAuthenticated(true);
+    }
+    setAuthLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
     fetch('/api/gallery').then(r => r.json()).then((data: Photo[]) => {
       setPhotos(data.map(p => ({ ...p, votes: p.votes ?? 0 })));
     });
-  }, []);
+  }, [isAuthenticated]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('admin_auth', 'authenticated');
+      setAuthError('');
+    } else {
+      setAuthError('Invalid password');
+      setPassword('');
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -91,6 +118,68 @@ export default function GalleryEdit() {
   const visibleCount = photos.filter(p => !p.hidden).length;
   const votedCount = photos.filter(p => (p.votes ?? 0) !== 0).length;
   const photo = photos[current];
+
+  if (authLoading) {
+    return <div style={{ minHeight: '100vh', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#111',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+      }}>
+        <form onSubmit={handleLogin} style={{
+          background: '#1a1a1a',
+          padding: '40px',
+          borderRadius: '16px',
+          width: '100%',
+          maxWidth: '360px',
+        }}>
+          <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: 500, marginBottom: '24px', textAlign: 'center' }}>
+            Gallery Editor
+          </h1>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
+            autoFocus
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              border: '1px solid #333',
+              background: '#111',
+              color: '#fff',
+              fontSize: '14px',
+              outline: 'none',
+              marginBottom: '12px',
+              boxSizing: 'border-box',
+            }}
+          />
+          {authError && <div style={{ color: '#f85149', fontSize: '13px', marginBottom: '12px', textAlign: 'center' }}>{authError}</div>}
+          <button type="submit" style={{
+            width: '100%',
+            padding: '10px',
+            borderRadius: '8px',
+            border: 'none',
+            background: '#4f8cff',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}>
+            Enter
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <>
