@@ -97,37 +97,51 @@ function ExploreContent() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   const placeholderSuggestions = [
+    'Try "Interstellar"',
     'Try "Drake"',
+    'Try "Take Care"',
+    'Try "Claire de lune"',
     'Try "r&b"',
+    'Try "Inception"',
     'Try "Radiohead"',
     'Try "neo soul"',
     'Try "Frank Ocean"',
+    'Try "channel ORANGE"',
     'Try "soundtrack"',
     'Try "Billie Eilish"',
-    'Try "boom bap"',
     'Try "Kanye West"',
-    'Try "rock"',
+    'Try "Graduation"',
+    'Try "alternative r&b"',
     'Try "Daniel Caesar"',
-    'Try "uk rap"',
+    'Try "Freudian"',
     'Try "Tyler, The Creator"',
+    'Try "IGOR"',
     'Try "pop"',
     'Try "Hans Zimmer"',
-    'Try "jazz rap"',
+    'Try "east coast hip hop"',
     'Try "SZA"',
-    'Try "melodic drill"',
+    'Try "SOS"',
     'Try "The Weeknd"',
-    'Try "Michael Jackson"',
+    'Try "After Hours"',
     'Try "Kendrick Lamar"',
+    'Try "Mr. Morale"',
     'Try "Sade"',
-    'Try "Ariana Grande"',
     'Try "Mac Miller"',
-    'Try "Coldplay"',
+    'Try "Swimming"',
     'Try "Childish Gambino"',
-    'Try "Rex Orange County"',
+    'Try "Awaken, My Love!"',
+    'Try "Ariana Grande"',
+    'Try "Coldplay"',
+    'Try "2014 Forest Hills Drive"',
+    'Try "uk rap"',
+    'Try "Madvillainy"',
     'Try "Clairo"',
-    'Try "Prince"',
+    'Try "CHROMAKOPIA"',
     'Try "Justin Bieber"',
+    'Try "Prince"',
+    'Try "Gemini Rights"',
     'Try "OutKast"',
+    'Try "alternative rock"',
   ];
 
   useEffect(() => {
@@ -648,7 +662,7 @@ function ExploreContent() {
       <div style={{
         position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'flex-start', minHeight: '100vh',
-        padding: '160px 24px 0 24px', boxSizing: 'border-box'
+        padding: '100px 24px 0 24px', boxSizing: 'border-box'
       }}>
         <motion.div
           style={{ position: 'relative', width: '100%', maxWidth: '600px', marginBottom: '16px' }}
@@ -657,10 +671,10 @@ function ExploreContent() {
           transition={{ duration: 1, delay: 0.3 }}
         >
           <div style={{
-            position: 'relative', background: 'rgba(255, 255, 255, 0.15)',
-            backdropFilter: 'blur(20px)', borderRadius: '24px',
-            border: '1px solid rgba(255, 255, 255, 0.3)', padding: '0',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)', overflow: 'visible', zIndex: 1
+            position: 'relative', background: 'rgba(0, 0, 0, 0.1)',
+            backdropFilter: 'blur(30px) saturate(1.5)', borderRadius: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.25)', padding: '0',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)', overflow: 'visible', zIndex: 1
           }}>
             <input
               ref={searchInputRef}
@@ -841,7 +855,7 @@ function ExploreContent() {
         </AnimatePresence>
       </div>
 
-      <SocialMediaIcons />
+      {/* Social icons hidden on explore - visible via menu */}
 
       {/* Player shows if there are player tracks with audio */}
       {playerTracks.some(r => r.audioUrl) && (
@@ -849,10 +863,10 @@ function ExploreContent() {
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           style={{
-            position: 'fixed', bottom: '94px', left: '15%', transform: 'translateX(-50%)', zIndex: 50,
-            background: 'rgba(0, 0, 0, 0.0)', backdropFilter: 'blur(10px)', borderRadius: '30px',
-            padding: '12px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center',
-            gap: '10px', width: '280px', border: '1px solid rgba(255, 255, 255, 0.1)'
+            position: 'fixed', bottom: '16px', left: '0', right: '0', margin: '0 auto', zIndex: 50,
+            background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(15px)', borderRadius: '20px',
+            padding: '8px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center',
+            gap: '6px', width: '300px', maxWidth: '90vw', border: '1px solid rgba(255, 255, 255, 0.1)'
           }}
         >
           {currentTrackIndex !== null && playerTracks[currentTrackIndex] && (
@@ -911,34 +925,34 @@ function ExploreContent() {
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button onClick={skipBackward} disabled={!audioOnly || playerTracks.length === 0} style={{
               background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '50%',
-              width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: audioOnly ? 'pointer' : 'not-allowed', opacity: audioOnly ? 1 : 0.3, transition: 'all 0.2s ease'
             }} onMouseEnter={(e) => { if (audioOnly) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}>
               <SkipBack size={18} color="white" />
             </button>
             <button onClick={togglePlayPause} disabled={!audioOnly || playerTracks.length === 0} style={{
-              width: '48px', height: '48px', background: audioOnly ? 'linear-gradient(135deg, #8B5CF6, #3B82F6)' : 'rgba(255, 255, 255, 0.1)',
+              width: '40px', height: '40px', background: audioOnly ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.1)',
               border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: audioOnly ? 'pointer' : 'not-allowed', opacity: audioOnly ? 1 : 0.3, transition: 'all 0.2s ease',
-              boxShadow: audioOnly ? '0 4px 12px rgba(139, 92, 246, 0.4)' : 'none'
+              boxShadow: 'none'
             }} onMouseEnter={(e) => { if (audioOnly) e.currentTarget.style.transform = 'scale(1.05)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}>
               {isPlaying ? <Pause size={20} color="white" /> : <Play size={20} color="white" style={{ marginLeft: '2px' }} />}
             </button>
             <button onClick={skipForward} disabled={!audioOnly || playerTracks.length === 0} style={{
               background: 'rgba(255, 255, 255, 0.1)', border: 'none', borderRadius: '50%',
-              width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: audioOnly ? 'pointer' : 'not-allowed', opacity: audioOnly ? 1 : 0.3, transition: 'all 0.2s ease'
             }} onMouseEnter={(e) => { if (audioOnly) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'; }}>
               <SkipForward size={18} color="white" />
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0px', paddingTop: '6px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', width: '100%', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0px', paddingTop: '4px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', width: '100%', justifyContent: 'center' }}>
             <span
               onClick={() => { if (audioOnly) { setAudioOnly(false); if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); } } }}
               style={{ color: !audioOnly ? 'white' : 'rgba(255, 255, 255, 0.3)', fontSize: '11px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.3s ease' }}
