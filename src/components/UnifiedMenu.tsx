@@ -12,11 +12,11 @@ interface UnifiedMenuProps {
 export default function UnifiedMenu({ isDark = false }: UnifiedMenuProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const menuItems = [
+  const menuItems: { name: string; href: string; external?: boolean }[] = [
     { name: 'Gallery', href: '/gallery' },
     { name: 'Explore Music', href: '/explore' },
     { name: 'Sheetify', href: '/sheetify' },
-    { name: 'Live Requests', href: '/live' }
+    { name: 'Live Requests', href: 'https://timikeys.live/#/', external: true }
   ];
 
   return (
@@ -192,36 +192,71 @@ export default function UnifiedMenu({ isDark = false }: UnifiedMenuProps) {
                       duration: 0.3
                     }}
                   >
-                    <Link
-                      href={item.href}
-                      onClick={() => setIsMenuOpen(false)}
-                      style={{
-                        display: 'block',
-                        padding: '18px 25px',
-                        fontSize: '18px',
-                        fontWeight: '500',
-                        color: '#444',
-                        textDecoration: 'none',
-                        borderLeft: '4px solid transparent',
-                        transition: 'all 0.3s ease',
-                        borderRadius: '0 12px 12px 0',
-                        margin: '0 8px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
-                        e.currentTarget.style.borderLeftColor = '#8B5CF6';
-                        e.currentTarget.style.color = '#8B5CF6';
-                        e.currentTarget.style.transform = 'translateX(8px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.borderLeftColor = 'transparent';
-                        e.currentTarget.style.color = '#444';
-                        e.currentTarget.style.transform = 'translateX(0)';
-                      }}
-                    >
-                      {item.name}
-                    </Link>
+                    {item.external ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setIsMenuOpen(false)}
+                        style={{
+                          display: 'block',
+                          padding: '18px 25px',
+                          fontSize: '18px',
+                          fontWeight: '500',
+                          color: '#444',
+                          textDecoration: 'none',
+                          borderLeft: '4px solid transparent',
+                          transition: 'all 0.3s ease',
+                          borderRadius: '0 12px 12px 0',
+                          margin: '0 8px'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                          e.currentTarget.style.borderLeftColor = '#8B5CF6';
+                          e.currentTarget.style.color = '#8B5CF6';
+                          e.currentTarget.style.transform = 'translateX(8px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.borderLeftColor = 'transparent';
+                          e.currentTarget.style.color = '#444';
+                          e.currentTarget.style.transform = 'translateX(0)';
+                        }}
+                      >
+                        {item.name}
+                      </a>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
+                        style={{
+                          display: 'block',
+                          padding: '18px 25px',
+                          fontSize: '18px',
+                          fontWeight: '500',
+                          color: '#444',
+                          textDecoration: 'none',
+                          borderLeft: '4px solid transparent',
+                          transition: 'all 0.3s ease',
+                          borderRadius: '0 12px 12px 0',
+                          margin: '0 8px'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                          e.currentTarget.style.borderLeftColor = '#8B5CF6';
+                          e.currentTarget.style.color = '#8B5CF6';
+                          e.currentTarget.style.transform = 'translateX(8px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.borderLeftColor = 'transparent';
+                          e.currentTarget.style.color = '#444';
+                          e.currentTarget.style.transform = 'translateX(0)';
+                        }}
+                      >
+                        {item.name}
+                      </Link>
+                    )}
                   </motion.div>
                 ))}
               </div>

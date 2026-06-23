@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import UnifiedMenu from '../../components/UnifiedMenu';
 import SocialMediaIcons from '../../components/SocialMediaIcons';
 
 interface Photo {
@@ -226,8 +227,8 @@ export default function Gallery() {
           )}
         </AnimatePresence>
 
-        {/* Back link */}
-        <div style={{ position: 'fixed', top: '18px', left: '24px', zIndex: 50 }}>
+        {/* Nav bar */}
+        <div style={{ position: 'fixed', top: '18px', left: '24px', right: '24px', zIndex: 50, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link
             href="/"
             style={{
@@ -243,6 +244,7 @@ export default function Gallery() {
           >
             ← Home
           </Link>
+          <UnifiedMenu />
         </div>
 
         <SocialMediaIcons />
