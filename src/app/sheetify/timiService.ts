@@ -41,15 +41,21 @@ export function cleanString(str: string): string {
     .trim();
 }
 
+function isMashup(songName: string): boolean {
+  const lower = songName.toLowerCase();
+  return lower.includes('mashup') || lower.includes('medley') || lower.includes(' x ') || lower.includes(' / ');
+}
+
 export function groupCoversBySong(covers: TimiVideo[]): { displayName: string, versions: string[] }[] {
-  const grouped: Record<string, { displayName: string, versions: string[] }> = {};
+  const grouped: Record<string, { displayName: string, versions: string[], isMashup: boolean }> = {};
 
   covers.forEach(cover => {
     const key = cleanString(cover.songName);
     if (!grouped[key]) {
       grouped[key] = {
         displayName: cover.songName,
-        versions: []
+        versions: [],
+        isMashup: isMashup(cover.songName)
       };
     }
     if (!grouped[key].versions.includes(cover.tiktokVideoLink)) {
@@ -57,7 +63,9 @@ export function groupCoversBySong(covers: TimiVideo[]): { displayName: string, v
     }
   });
 
-  return Object.values(grouped);
+  const results = Object.values(grouped);
+  results.sort((a, b) => (a.isMashup ? 1 : 0) - (b.isMashup ? 1 : 0));
+  return results;
 }
 
 export function findMatchesForTrack(track: SpotifyTrack, timiSongs: TimiVideo[]) {

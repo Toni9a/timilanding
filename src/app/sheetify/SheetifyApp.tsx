@@ -8,7 +8,30 @@ import { VexStaff } from './VexStaff';
 import { CodaSymbol } from './MusicSymbols';
 import './sheetify.css';
 
-interface SongItem { title: string; artist: string; key?: string; spotifyId?: string }
+interface SongItem { title: string; artist: string; key?: string; spotifyId?: string; tiktokLink?: string }
+
+const SongPopup: React.FC<{ song: SongItem; onClose: () => void; position: { x: number; y: number } }> = ({ song, onClose, position }) => (
+  <>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
+    <div style={{
+      position: 'fixed', left: position.x, top: position.y, transform: 'translate(-50%, -100%)',
+      zIndex: 101, backgroundColor: '#f5f0e6', border: '1px solid #c4b99a', borderRadius: '4px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '160px',
+    }}>
+      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: '13px', fontWeight: 'bold', color: '#292524', margin: 0 }}>{song.title}</p>
+      <a href={`https://open.spotify.com/track/${song.spotifyId}`} target="_blank" rel="noopener noreferrer"
+        style={{ display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'monospace', fontSize: '12px', color: '#1DB954', textDecoration: 'none', padding: '6px 0', borderTop: '1px solid #e7e5e4' }}>
+        ▶ Play on Spotify
+      </a>
+      {song.tiktokLink && (
+        <a href={song.tiktokLink} target="_blank" rel="noopener noreferrer"
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'monospace', fontSize: '12px', color: '#a855f7', textDecoration: 'none', padding: '6px 0', borderTop: '1px solid #e7e5e4' }}>
+          ♫ Play Timi&apos;s cover
+        </a>
+      )}
+    </div>
+  </>
+);
 
 const EmptyStave: React.FC<{ width: number; timeSignature: string }> = ({ width, timeSignature }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +55,7 @@ const EmptyStave: React.FC<{ width: number; timeSignature: string }> = ({ width,
   return <div ref={containerRef} style={{ position: 'absolute', inset: 0, opacity: 0.4, filter: 'grayscale(100%)', overflow: 'visible' }} />;
 };
 
-const StaffRow: React.FC<{ songs: SongItem[]; startIndex: number; rowIndex: number; slabWidth: number; timeSignature: string; sonicScore: number; musicSeed: number }> = ({ songs, startIndex, rowIndex, slabWidth, musicSeed, timeSignature }) => {
+const StaffRow: React.FC<{ songs: SongItem[]; startIndex: number; rowIndex: number; slabWidth: number; timeSignature: string; sonicScore: number; musicSeed: number; onSongClick: (song: SongItem, e: React.MouseEvent) => void }> = ({ songs, startIndex, rowIndex, slabWidth, musicSeed, timeSignature, onSongClick }) => {
   const revealDelay = 0.5 + rowIndex * 0.8;
 
   return (
@@ -50,37 +73,24 @@ const StaffRow: React.FC<{ songs: SongItem[]; startIndex: number; rowIndex: numb
           style={{ width: '100%', display: 'grid', gap: '8px', alignItems: 'center', gridTemplateColumns: `repeat(${songs.length}, 1fr)`, paddingLeft: '80px', paddingRight: '16px' }}
         >
           {songs.map((song, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center' }}>
-              <div className="text-halo" style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <div key={i} onClick={(e) => onSongClick(song, e)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', minWidth: 0, cursor: 'pointer' }}>
+              <div className="text-halo" style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                 <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#a8a29e' }}>#{startIndex + i + 1}</span>
-                {song.spotifyId && song.spotifyId.length > 5 ? (
-                  <a
-                    href={`https://open.spotify.com/track/${song.spotifyId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="song-glow-text"
-                    style={{ fontSize: 'clamp(14px, 2vw, 18px)', fontWeight: 'bold', letterSpacing: '-0.025em', fontFamily: "'Playfair Display', serif", textDecoration: 'none', animationDelay: `${revealDelay}s` }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {song.title}
-                  </a>
-                ) : (
-                  <span
-                    className="song-glow-text"
-                    style={{ fontSize: 'clamp(14px, 2vw, 18px)', fontWeight: 'bold', letterSpacing: '-0.025em', fontFamily: "'Playfair Display', serif", animationDelay: `${revealDelay}s` }}
-                  >
-                    {song.title}
-                  </span>
-                )}
+                <span
+                  className="song-glow-text"
+                  style={{ fontSize: 'clamp(11px, 1.6vw, 18px)', fontWeight: 'bold', letterSpacing: '-0.025em', fontFamily: "'Playfair Display', serif", animationDelay: `${revealDelay}s` }}
+                >
+                  {song.title}
+                </span>
                 {song.key && (
-                  <span style={{ fontSize: '9px', fontFamily: 'monospace', border: '1px solid #a8a29e', padding: '0 4px', borderRadius: '2px', opacity: 0.5, textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '8px', fontFamily: 'monospace', border: '1px solid #a8a29e', padding: '0 3px', borderRadius: '2px', opacity: 0.5, textTransform: 'uppercase', flexShrink: 0 }}>
                     {song.key}
                   </span>
                 )}
               </div>
               <span
                 className="song-glow-text"
-                style={{ fontSize: '12px', marginLeft: '20px', fontFamily: 'sans-serif', animationDelay: `${revealDelay + 0.3}s` }}
+                style={{ fontSize: '10px', marginLeft: '20px', fontFamily: 'sans-serif', animationDelay: `${revealDelay + 0.3}s` }}
               >
                 {song.artist}
               </span>
@@ -109,6 +119,7 @@ export default function SheetifyApp() {
   const [sharing, setSharing] = useState(false);
   const [requestEmail, setRequestEmail] = useState('');
   const [requestStatus, setRequestStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [popupSong, setPopupSong] = useState<{ song: SongItem; position: { x: number; y: number } } | null>(null);
   const slabRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -155,6 +166,10 @@ export default function SheetifyApp() {
         backgroundColor: '#fdfbf7',
         scale: 2,
         useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: false,
+        removeContainer: true,
+        ignoreElements: (el) => el.tagName === 'svg',
       });
       canvas.toBlob(async (blob) => {
         if (!blob) return;
@@ -187,7 +202,15 @@ export default function SheetifyApp() {
     artist: item.track.artists[0].name,
     key: item.matchType !== 'none' ? (item.matchType === 'exact' ? 'MATCH' : 'VIBE') : '',
     spotifyId: item.track.id,
+    tiktokLink: item.matchType === 'exact' && item.matches.length > 0 ? item.matches[0].versions[0] : undefined,
   }));
+
+  const songsPerRow = 3;
+
+  const handleSongClick = (song: SongItem, e: React.MouseEvent) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setPopupSong({ song, position: { x: rect.left + rect.width / 2, y: rect.top } });
+  };
 
   useEffect(() => {
     if (!slabRef.current) return;
@@ -370,17 +393,18 @@ export default function SheetifyApp() {
 
               {!loading && (() => {
                 const rows = [];
-                for (let i = 0; i < displaySongs.length; i += 3) {
+                for (let i = 0; i < displaySongs.length; i += songsPerRow) {
                   rows.push(
                     <StaffRow
                       key={i}
-                      songs={displaySongs.slice(i, i + 3)}
+                      songs={displaySongs.slice(i, i + songsPerRow)}
                       startIndex={i}
-                      rowIndex={i / 3}
+                      rowIndex={i / songsPerRow}
                       slabWidth={slabWidth}
                       timeSignature={currentTimeSignature}
                       sonicScore={sonicData?.score || 50}
                       musicSeed={musicSeed}
+                      onSongClick={handleSongClick}
                     />
                   );
                 }
@@ -409,6 +433,9 @@ export default function SheetifyApp() {
           </div>
         </div>
       </div>
+      {popupSong && (
+        <SongPopup song={popupSong.song} position={popupSong.position} onClose={() => setPopupSong(null)} />
+      )}
     </div>
   );
 }
