@@ -13,7 +13,6 @@
     "@types/nodemailer": "^7.0.1",
     "@types/papaparse": "^5.5.2",
     "@vercel/analytics": "^1.5.0",
-    "@xbibzlibrary/tiktokscrap": "^1.0.1-released",
     "framer-motion": "^12.23.12",
     "google-trends-api": "^4.9.2",
     "html2canvas": "^1.4.1",
@@ -24,7 +23,6 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "recharts": "^3.9.0",
-    "tiktok-scraper": "^1.4.36",
     "vexflow": "^5.0.0",
     "xlsx": "^0.18.5"
   },
