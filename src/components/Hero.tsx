@@ -47,6 +47,16 @@ export default function Hero() {
           }
         }
 
+        .hero-text-overlay {
+          top: 29%;
+        }
+
+        @media (max-width: 768px) {
+          .hero-text-overlay {
+            top: 22%;
+          }
+        }
+
         @media (max-width: 768px) {
           .nav-buttons {
             gap: 8px !important;
@@ -108,9 +118,8 @@ export default function Hero() {
       />
       
       {/* Hero Text Overlay */}
-      <div style={{
+      <div className="hero-text-overlay" style={{
         position: 'fixed',
-        top: '29%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
         zIndex: 5,
@@ -123,7 +132,7 @@ export default function Hero() {
           fontWeight: 'bold',
           margin: 0,
           marginBottom: '0.5rem',
-          color: '#e879f9',
+          color: '#e3c368',
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
           transition: 'all 0.3s ease',
           fontFamily: "'PARISIAN', 'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive",
@@ -134,7 +143,7 @@ export default function Hero() {
         <p style={{
           fontSize: 'clamp(1.2rem, 3vw, 2rem)',
           margin: 0,
-          color: '#e879f9',
+          color: '#e3c368',
           textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
           transition: 'all 0.3s ease',
           fontFamily: " 'PARISIAN', 'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive",

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { useEffect, useState } from 'react';
 import Hero from '../components/Hero';
 import SocialMediaIcons from '../components/SocialMediaIcons';
+import RecognisedBy from '../components/RecognisedBy';
 
 export default function HomePage() {
   // Contact form state
@@ -262,9 +263,9 @@ const scrollToSection = (sectionId: string) => {
             }}
             className="scroll-fade-element"
             >
-              Currently balancing Harvard studies with athletic pursuits and a growing performance schedule, Timi invites audiences to{' '}
-              <a 
-              href="/explore" 
+              Balancing Harvard with an ever-growing performance and collaboration schedule, Timi is redefining what the piano can be.{' '}
+              <a
+              href="/explore"
               style={{ 
                 color: 'rgba(255, 255, 255, 0.9)',
                 textDecoration: 'underline',
@@ -299,12 +300,15 @@ const scrollToSection = (sectionId: string) => {
                 target.style.textShadow = '1px 1px 3px rgba(0, 0, 0, 0.8)';
               }}
             >
-              explore
+              Explore
             </a>
-              {' '}a world where piano knows no limits—making the instrument cool for brands, events, and a new generation of music lovers.
+              {' '}a world where classical training meets culture—built for brands, built for the stage, built for what&apos;s next.
             </p>
           </div>
         </section>
+
+        {/* Recognised By - Rolling Credits */}
+        <RecognisedBy />
 
         {/* Contact Section - Glass Effect Only on Form */}
         <section id="contact" style={{
