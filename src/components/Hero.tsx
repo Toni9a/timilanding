@@ -53,7 +53,13 @@ export default function Hero() {
 
         @media (max-width: 768px) {
           .hero-text-overlay {
-            top: 22%;
+            top: 28%;
+          }
+          .hero-title {
+            font-size: 3.6rem !important;
+          }
+          .hero-subtitle {
+            font-size: 1.6rem !important;
           }
         }
 
@@ -127,7 +133,7 @@ export default function Hero() {
         pointerEvents: 'none',
         opacity: Math.max(0, 1 - (scrollProgress * 2))
       }}>
-        <h1 style={{
+        <h1 className="hero-title" style={{
           fontSize: 'clamp(3rem, 8vw, 6rem)',
           fontWeight: 'bold',
           margin: 0,
@@ -140,7 +146,7 @@ export default function Hero() {
         }}>
           Timikeys
         </h1>
-        <p style={{
+        <p className="hero-subtitle" style={{
           fontSize: 'clamp(1.2rem, 3vw, 2rem)',
           margin: 0,
           color: '#e3c368',

@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 
 const PEOPLE = [
+  'Drake',
+  'Olivia Dean',
   'Dave',
   'Knucks',
-  'Drake',
   'The Weeknd',
   'Damien Lillard',
   'Metro Boomin',
@@ -21,7 +22,6 @@ const PEOPLE = [
   'SZA',
   'Westside Gunn',
   'Illmind',
-  'Olivia Dean',
   'Madison Beer',
   'Rex Orange County',
   'Jim Legxacy',
