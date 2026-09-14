@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import SocialMediaIcons from '../../components/SocialMediaIcons';
 import { SPOTIFY_CONFIG } from '../../lib/spotify-config';
+import { slugify } from '../../lib/slugify';
 import UnifiedMenu from '../../components/UnifiedMenu';
 
 interface Genre {
@@ -56,7 +58,11 @@ export default function ExplorePage() {
   );
 }
 
-function ExploreContent() {
+interface ExploreContentProps {
+  initialQuery?: string;
+}
+
+export function ExploreContent({ initialQuery }: ExploreContentProps = {}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Performance[]>([]);
   const [playerTracks, setPlayerTracks] = useState<Performance[]>([]);
@@ -157,6 +163,17 @@ function ExploreContent() {
       setAudioOnly(true);
     }
   }, [searchParams]);
+
+  // Artist landing pages (/explore/artist/[slug]) pass a name to pre-fill and
+  // auto-run the search, so a visitor lands on the same interactive experience
+  // as if they'd typed it themselves.
+  useEffect(() => {
+    if (initialQuery) {
+      setSearchQuery(initialQuery);
+      handleSearch(initialQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
 
   const loadingMessages = [
     "Fetching those notes...",
@@ -823,7 +840,15 @@ function ExploreContent() {
                       <span style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>{result.songName}</span>
                     </div>
                     <div style={{ color: 'rgba(255, 255, 255, 0.65)', fontSize: '14px' }}>
-                      {result.artistName}
+                      <Link
+                        href={`/explore/artist/${slugify(result.artistName.split(',')[0].trim())}`}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ color: 'inherit', textDecoration: 'none' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
+                      >
+                        {result.artistName}
+                      </Link>
                       {result.videoLength && (
                         <span style={{ marginLeft: '12px', opacity: 0.5 }}>{displayDuration(result.videoLength)}</span>
                       )}
