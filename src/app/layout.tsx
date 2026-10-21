@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import './globals.css'
+
+// Public by design (it ships in the page), so no env var needed
+const GA_MEASUREMENT_ID = 'G-1TV5VLB62C'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.timikeys.com'),
@@ -35,7 +39,25 @@ export default function RootLayout({
         <link href="https://fonts.cdnfonts.com/css/parisian" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body>{children}</body>
+      <body>
+        {GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        )}
+        {children}
+      </body>
     </html>
   )
 }
