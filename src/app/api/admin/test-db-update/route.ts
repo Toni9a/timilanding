@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { backendWriteHeaders } from '@/lib/backend';
 
 const execAsync = promisify(exec);
 
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       try {
         const updateResponse = await fetch(`https://timikeys.up.railway.app/api/v1/performances/${performance.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: backendWriteHeaders(),
           body: JSON.stringify({
             uploadDate: formattedDate
           })

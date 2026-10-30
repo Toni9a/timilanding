@@ -562,7 +562,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
           // Step 4: Submit to backend (performances table)
           console.log('📤 Submitting to performances table...');
-          const performanceResponse = await fetch('https://timikeys.up.railway.app/api/v1/performances/add', {
+          const performanceResponse = await fetch('/api/admin/backend/performances/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(performanceData)
@@ -575,7 +575,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
           // Step 5: Submit to backend (songs table)
           console.log('📤 Submitting to songs table...');
-          const songResponse = await fetch('https://timikeys.up.railway.app/api/v1/songs/add', {
+          const songResponse = await fetch('/api/admin/backend/songs/add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(songData)

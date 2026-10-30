@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { backendWriteHeaders } from '@/lib/backend';
 
 function generateUUID() {
   let dt = new Date().getTime();
@@ -22,7 +23,7 @@ async function submitToDatabase(performanceData: any, songData: any) {
   // Submit to performances endpoint
   const performanceResponse = await fetch('https://timikeys.up.railway.app/api/v1/performances/add', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: backendWriteHeaders(),
     body: JSON.stringify(performanceData)
   });
 
@@ -34,7 +35,7 @@ async function submitToDatabase(performanceData: any, songData: any) {
   // Submit to songs endpoint  
   const songResponse = await fetch('https://timikeys.up.railway.app/api/v1/songs/add', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: backendWriteHeaders(),
     body: JSON.stringify(songData)
   });
 

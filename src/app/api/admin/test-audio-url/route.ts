@@ -1,5 +1,6 @@
 // src/app/api/admin/test-audio-url/route.ts
 import { NextResponse } from 'next/server';
+import { backendWriteHeaders } from '@/lib/backend';
 
 export async function POST(request: Request) {
   try {
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
 
     const updateResponse = await fetch(`https://timikeys.up.railway.app/api/v1/songs/${existingSong.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: backendWriteHeaders(),
       body: JSON.stringify({
         audioUrl: newAudioUrl
       })
