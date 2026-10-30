@@ -4,8 +4,6 @@
 import { useState, useEffect } from 'react';
 import { AdminDashboard } from '@/components/AdminDashboard';
 
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'timikeys2024';
-
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -13,20 +11,23 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if already authenticated
-    const auth = sessionStorage.getItem('admin_auth');
-    if (auth === 'authenticated') {
-      setIsAuthenticated(true);
-    }
-    setLoading(false);
+    fetch('/api/auth/check')
+      .then(r => r.json())
+      .then(d => setIsAuthenticated(!!d.authenticated))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password === ADMIN_PASSWORD) {
+
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+
+    if (res.ok) {
       setIsAuthenticated(true);
-      sessionStorage.setItem('admin_auth', 'authenticated');
       setError('');
     } else {
       setError('Invalid password');
@@ -34,9 +35,9 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
     setIsAuthenticated(false);
-    sessionStorage.removeItem('admin_auth');
     setPassword('');
   };
 

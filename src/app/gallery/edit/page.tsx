@@ -11,8 +11,6 @@ interface Photo {
   votes?: number;
 }
 
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'timikeys2024';
-
 export default function GalleryEdit() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -26,11 +24,10 @@ export default function GalleryEdit() {
   const [mode, setMode] = useState<'vote' | 'list'>('vote');
 
   useEffect(() => {
-    const auth = sessionStorage.getItem('admin_auth');
-    if (auth === 'authenticated') {
-      setIsAuthenticated(true);
-    }
-    setAuthLoading(false);
+    fetch('/api/auth/check')
+      .then(r => r.json())
+      .then(d => setIsAuthenticated(!!d.authenticated))
+      .finally(() => setAuthLoading(false));
   }, []);
 
   useEffect(() => {
@@ -40,11 +37,15 @@ export default function GalleryEdit() {
     });
   }, [isAuthenticated]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (res.ok) {
       setIsAuthenticated(true);
-      sessionStorage.setItem('admin_auth', 'authenticated');
       setAuthError('');
     } else {
       setAuthError('Invalid password');

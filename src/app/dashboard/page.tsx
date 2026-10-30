@@ -215,8 +215,6 @@ function VideoRow({ s, rank }: { s: Snapshot; rank: number }) {
   );
 }
 
-const DASHBOARD_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'timikeys2024';
-
 export default function DashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
@@ -224,9 +222,10 @@ export default function DashboardPage() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const auth = sessionStorage.getItem('dashboard_auth');
-    if (auth === 'authenticated') setIsAuthenticated(true);
-    setAuthLoading(false);
+    fetch('/api/auth/check')
+      .then(r => r.json())
+      .then(d => setIsAuthenticated(!!d.authenticated))
+      .finally(() => setAuthLoading(false));
   }, []);
 
   if (authLoading) return <div style={{ minHeight: '100vh', background: '#0a0a0a' }} />;
@@ -234,11 +233,15 @@ export default function DashboardPage() {
   if (!isAuthenticated) {
     return (
       <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
-        <form onSubmit={e => {
+        <form onSubmit={async e => {
           e.preventDefault();
-          if (password === DASHBOARD_PASSWORD) {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password }),
+          });
+          if (res.ok) {
             setIsAuthenticated(true);
-            sessionStorage.setItem('dashboard_auth', 'authenticated');
           } else {
             setAuthError('Wrong password');
             setPassword('');
