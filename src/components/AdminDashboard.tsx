@@ -1,7 +1,7 @@
 // src/components/AdminDashboard.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -38,9 +38,22 @@ interface RowData {
   yesOrNo: string;
   spotifyId: string;
   genres: string;
+  genreSource?: string; // set when genres came from past entries instead of Spotify
   uuid: string;
   status: 'pending' | 'success' | 'error';
 }
+
+interface PastPerformance {
+  songName: string | null;
+  artistName: string | null;
+  mainGenre: string | null;
+  subGenre: string | null;
+  otherGenres: string[] | null;
+}
+
+const normalise = (s: string | null | undefined) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const splitArtists = (s: string | null | undefined) =>
+  (s || '').split(/,|&|\bfeat\.?\b|\bft\.?\b|\bx\b/i).map(normalise).filter(Boolean);
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [recentEntries, setRecentEntries] = useState<Performance[]>([]);
@@ -50,6 +63,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const pastPerformances = useRef<PastPerformance[] | null>(null);
 
   function createEmptyRow(): RowData {
     return {
@@ -232,23 +246,28 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         }
 
         // Update the row
+        const artistName = track.artists.map((a: any) => a.name).join(', ');
         setRows(prevRows =>
           prevRows.map(row =>
             row.id === rowId
               ? {
                   ...row,
-                  artistName: track.artists.map((a: any) => a.name).join(', '),
+                  artistName,
                   albumName: track.album.name,
                   spotifyId: track.id,
                   genres: genres,
+                  genreSource: undefined,
                   status: 'success'
                 }
               : row
           )
         );
+        await fillPastGenresIfEmpty(rowId, songName, artistName, genres);
 
         console.log('✅ Spotify data updated');
       } else {
+        const row = rows.find(r => r.id === rowId);
+        await fillPastGenresIfEmpty(rowId, songName, row?.artistName || '', row?.genres || '');
         alert('Song not found on Spotify');
       }
     } catch (error) {
@@ -275,6 +294,59 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     return '';
   }
 
+  // Fallback when Spotify has no genres: reuse what was typed in for this song,
+  // or failing that the most common genres across past entries for the artist.
+  async function findPastGenres(songName: string, artistName: string): Promise<{ genres: string; source: string } | null> {
+    try {
+      if (!pastPerformances.current) {
+        const response = await fetch('https://timikeys.up.railway.app/api/v1/performances?page=1&limit=10000');
+        if (!response.ok) return null;
+        const data = await response.json();
+        pastPerformances.current = data.data?.data || [];
+      }
+      const past = pastPerformances.current!;
+      const genresOf = (p: PastPerformance) =>
+        [p.mainGenre, p.subGenre, ...(p.otherGenres || [])].map(g => (g || '').trim()).filter(Boolean);
+      const artists = splitArtists(artistName);
+      const sharesArtist = (p: PastPerformance) =>
+        artists.length === 0 || splitArtists(p.artistName).some(a => artists.includes(a));
+
+      const song = normalise(songName);
+      // The same song can appear in several videos; use the entry with the most genres
+      const sameSong = past
+        .filter(p => normalise(p.songName) === song && sharesArtist(p) && genresOf(p).length)
+        .sort((a, b) => genresOf(b).length - genresOf(a).length)[0];
+      if (sameSong) {
+        return { genres: genresOf(sameSong).join(', '), source: `From your past entry for "${sameSong.songName}"` };
+      }
+
+      if (artists.length === 0) return null;
+      const counts = new Map<string, number>();
+      let entries = 0;
+      past.filter(p => splitArtists(p.artistName)[0] === artists[0]).forEach(p => {
+        entries++;
+        genresOf(p).forEach(g => counts.set(g.toLowerCase(), (counts.get(g.toLowerCase()) || 0) + 1));
+      });
+      if (!counts.size) return null;
+      const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([g]) => g);
+      return { genres: top.join(', '), source: `From ${entries} past ${artistName.split(',')[0].trim()} entr${entries === 1 ? 'y' : 'ies'}` };
+    } catch (error) {
+      console.error('Failed to look up past genres:', error);
+      return null;
+    }
+  }
+
+  async function fillPastGenresIfEmpty(rowId: string, songName: string, artistName: string, spotifyGenres: string) {
+    if (spotifyGenres) return;
+    const match = await findPastGenres(songName, artistName);
+    if (!match) return;
+    setRows(prevRows =>
+      prevRows.map(row =>
+        row.id === rowId && !row.genres ? { ...row, genres: match.genres, genreSource: match.source } : row
+      )
+    );
+  }
+
   function cycleSpotifyResults(rowId: string) {
     if (searchResults.length === 0) {
       alert('No search results. Click "🎵 Fetch" first.');
@@ -288,19 +360,22 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     
     // Get genres for the new track
     fetchArtistGenres(track.artists[0].id).then(genres => {
+      const artistName = track.artists.map((a: any) => a.name).join(', ');
       setRows(prevRows =>
         prevRows.map(row =>
           row.id === rowId
             ? {
                 ...row,
-                artistName: track.artists.map((a: any) => a.name).join(', '),
+                artistName,
                 albumName: track.album.name,
                 spotifyId: track.id,
-                genres: genres
+                genres: genres,
+                genreSource: undefined
               }
             : row
         )
       );
+      fillPastGenresIfEmpty(rowId, rows.find(r => r.id === rowId)?.songName || '', artistName, genres);
     });
 
     console.log(`Showing result ${nextIndex + 1} of ${searchResults.length}: ${track.name}`);
@@ -481,7 +556,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             videoLength: row.videoLength || '',
             YesNo: row.yesOrNo === 'yes', // Note: YesNo not yesOrNo
             spotifyId: row.spotifyId,
-            audioUrl: audioUrl
+            audioUrl: audioUrl,
+            genres: genresArray // links the song to genres so it shows up in genre search
           };
 
           // Step 4: Submit to backend (performances table)
@@ -977,6 +1053,11 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         fontSize: '12px'
                       }}
                     />
+                    {row.genreSource && (
+                      <div style={{ width: '120px', marginTop: '4px', fontSize: '10px', color: '#b26a00' }}>
+                        {row.genreSource}
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: '12px' }}>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
@@ -1021,6 +1102,21 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         }}
                       >
                         📄 Duplicate
+                      </button>
+                      <button
+                        onClick={addRow}
+                        title="Add a new row at the bottom"
+                        style={{
+                          padding: '4px 8px',
+                          background: '#667eea',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ➕ Row
                       </button>
                       <button
                         onClick={() => deleteRow(row.id)}
